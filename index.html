@@ -4,15 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate Support - RamDev</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
         :root {
             --primary: #5e6ad2;
             --success: #00c853;
             --error: #ff5252;
-            --bg: #fdfdfd;
+            --bg: #f8f9fa;
             --text: #2c3e50;
         }
 
@@ -27,35 +29,52 @@
             margin: 0;
         }
 
+        /* ปุ่มสแกนขวาบน */
+        .scan-trigger {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: 0.3s;
+            z-index: 1000;
+        }
+        .scan-trigger:hover { transform: scale(1.1); color: var(--primary); }
+
         .card {
             background: #ffffff;
             width: 90%;
             max-width: 400px;
             padding: 2rem;
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             text-align: center;
         }
 
-        .back-nav {
-            display: flex;
-            align-items: center;
-            margin-bottom: 1.5rem;
-        }
-
+        .back-nav { display: flex; align-items: center; margin-bottom: 1.5rem; }
         .btn-link {
             text-decoration: none;
             color: #999;
             font-size: 0.9rem;
             display: flex;
             align-items: center;
+            cursor: pointer;
+            border: none;
+            background: none;
             transition: 0.3s;
         }
-
         .btn-link:hover { color: var(--primary); }
 
-        h2 { font-weight: 600; margin-bottom: 0.5rem; }
-        .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
+        h2 { font-weight: 600; margin: 0 0 0.5rem 0; }
+        .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
 
         .grid {
             display: grid;
@@ -67,14 +86,14 @@
         .btn-opt {
             border: 1.5px solid #eee;
             background: none;
-            padding: 12px;
+            padding: 12px 5px;
             border-radius: 12px;
             cursor: pointer;
             font-family: inherit;
             transition: 0.2s;
+            font-weight: 500;
         }
-
-        .btn-opt:hover { border-color: var(--primary); color: var(--primary); }
+        .btn-opt:hover { border-color: var(--primary); color: var(--primary); background: #f8f9ff; }
 
         input[type="number"] {
             width: 100%;
@@ -85,17 +104,18 @@
             box-sizing: border-box;
             text-align: center;
             font-size: 1rem;
+            font-family: inherit;
         }
 
         .qr-area {
             background: #f9f9f9;
-            padding: 15px;
+            padding: 20px;
             border-radius: 20px;
             margin: 1.5rem 0;
             display: none;
         }
 
-        .qr-img { width: 100%; max-width: 200px; border-radius: 10px; }
+        .qr-img { width: 100%; max-width: 180px; border-radius: 10px; margin: 0 auto; }
 
         .upload-box {
             border: 2px dashed #ddd;
@@ -103,12 +123,11 @@
             border-radius: 15px;
             margin-top: 1rem;
             cursor: pointer;
-            position: relative;
+            transition: 0.3s;
         }
-
         .upload-box:hover { background: #f8f9ff; border-color: var(--primary); }
 
-        .timer { color: var(--error); font-weight: 600; margin-top: 10px; }
+        .timer { color: var(--error); font-weight: 600; margin-top: 10px; font-size: 0.9rem; }
 
         .btn-main {
             width: 100%;
@@ -121,14 +140,45 @@
             font-weight: 500;
             cursor: pointer;
             margin-top: 1rem;
+            transition: 0.3s;
         }
+        .btn-main:active { transform: scale(0.98); }
 
         .hidden { display: none; }
-        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
+
+        /* Bank List Styling */
+        .bank-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            padding: 10px 0;
+        }
+        .bank-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .bank-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            margin-bottom: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        #reader { width: 100%; border-radius: 12px; overflow: hidden; }
+
+        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 20px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
+
+    <button class="scan-trigger" onclick="openScanner()" title="สแกน QR Code">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 7 4"></polyline><polyline points="17 4 20 4 20 7"></polyline><polyline points="20 17 20 20 17 20"></polyline><polyline points="7 20 4 20 4 17"></polyline><line x1="7" y1="12" x2="17" y2="12"></line><line x1="12" y1="7" x2="12" y2="17"></line></svg>
+    </button>
 
     <div class="card">
         <div class="back-nav">
@@ -142,14 +192,14 @@
             <h2>สนับสนุนเรา</h2>
             <p class="subtitle">เลือกยอดเงินที่ต้องการโดเนท</p>
             <div class="grid">
-                <button class="btn-opt" onclick="genQR(10)">10</button>
-                <button class="btn-opt" onclick="genQR(20)">20</button>
-                <button class="btn-opt" onclick="genQR(30)">30</button>
-                <button class="btn-opt" onclick="genQR(50)">50</button>
-                <button class="btn-opt" onclick="genQR(100)">100</button>
-                <button class="btn-opt" onclick="genQR(200)">200</button>
+                <button class="btn-opt" onclick="genQR(10)">10.-</button>
+                <button class="btn-opt" onclick="genQR(20)">20.-</button>
+                <button class="btn-opt" onclick="genQR(30)">30.-</button>
+                <button class="btn-opt" onclick="genQR(50)">50.-</button>
+                <button class="btn-opt" onclick="genQR(100)">100.-</button>
+                <button class="btn-opt" onclick="genQR(200)">200.-</button>
             </div>
-            <input type="number" id="manual-amount" placeholder="ระบุยอดเงินเอง">
+            <input type="number" id="manual-amount" placeholder="ระบุจำนวนเงินเอง">
             <button class="btn-main" onclick="genQR(document.getElementById('manual-amount').value)">สร้างรายการ</button>
         </div>
 
@@ -157,32 +207,129 @@
             <h3 id="target-txt">ยอดชำระ 0.00 บาท</h3>
             <div class="qr-area" id="qr-block">
                 <div id="loader" class="loading-spin"></div>
-                <img id="qr-display" class="qr-img" src="" alt="QR">
+                <img id="qr-display" class="qr-img hidden" src="" alt="QR Payment">
                 <div class="timer" id="timer">05:00</div>
             </div>
 
             <div class="upload-box" onclick="document.getElementById('slip-input').click()">
-                <span id="upload-label">คลิกเพื่อแนบสลิป</span>
+                <span id="upload-label">คลิกเพื่อแนบสลิปยืนยัน</span>
                 <input type="file" id="slip-input" class="hidden" accept="image/*" onchange="handleFile(this)">
-                <img id="preview" style="display:none; width:50px; margin-top:10px; border-radius:5px;">
+                <div id="preview-container" style="display:none; margin-top:10px;">
+                    <img id="preview" style="width:80px; border-radius:8px;">
+                </div>
             </div>
 
-            <button id="verify-btn" class="btn-main" onclick="verifyWithEasySlip()" style="background: var(--success);">ยืนยันการโอน</button>
-            <button class="btn-link" onclick="location.reload()" style="margin: 15px auto; display: block;">ยกเลิกรายการ</button>
+            <button id="verify-btn" class="btn-main" onclick="verifyWithEasySlip()" style="background: var(--success);">ตรวจสอบการโอน</button>
+            <button class="btn-link" onclick="location.reload()" style="margin: 20px auto; display: block;">ยกเลิกรายการ</button>
         </div>
     </div>
 
     <script>
         // --- CONFIG ---
-        const MY_PROMPTPAY_ID = "0987943610"; // เบอร์พร้อมเพย์
-        const EASYSLIP_API_KEY = "2f61c12e-b343-4738-83b8-ba11fe8e9ae6"; // เอาจาก easyslip.com
-        // --------------
+        const MY_PROMPTPAY_ID = "0987943610"; 
+        const EASYSLIP_API_KEY = "2f61c12e-b343-4738-83b8-ba11fe8e9ae6";
 
+        const BANK_LIST = [
+            { name: 'K Plus', color: '#138f2d', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438258.png' },
+            { name: 'SCB Easy', color: '#4e2e7f', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438259.png' },
+            { name: 'Krungthai', color: '#00a1e0', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438260.png' },
+            { name: 'Bangkok', color: '#1e4598', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438261.png' },
+            { name: 'KMA', color: '#fec43b', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438262.png' },
+            { name: 'TTB', color: '#fb4f14', icon: 'https://cdn-icons-png.flaticon.com/128/11438/11438263.png' }
+        ];
+
+        let html5QrCode;
         let currentAmount = 0;
         let timerInterval;
 
+        // --- SCANNER LOGIC ---
+
+        async function openScanner() {
+            // เช็คว่าเป็น HTTPS หรือไม่
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                return Swal.fire('ไม่ปลอดภัย', 'ระบบสแกนต้องการ HTTPS เพื่อใช้งานกล้อง', 'error');
+            }
+
+            Swal.fire({
+                title: 'สแกนคิวอาร์โค้ด',
+                html: '<div id="reader"></div>',
+                showConfirmButton: false,
+                showCloseButton: true,
+                didOpen: () => {
+                    html5QrCode = new Html5Qrcode("reader");
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 15, qrbox: { width: 250, height: 250 } },
+                        onScanSuccess
+                    ).catch(err => {
+                        Swal.fire('กล้องผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้: ' + err, 'error');
+                    });
+                },
+                willClose: () => {
+                    if(html5QrCode) html5QrCode.stop().catch(() => {});
+                }
+            });
+        }
+
+        function onScanSuccess(decodedText) {
+            html5QrCode.stop().then(() => {
+                Swal.close();
+                // 1. Check URL
+                if (decodedText.match(/^https?:\/\//)) {
+                    handleURL(decodedText);
+                } 
+                // 2. Check PromptPay (EMVCo Pattern)
+                else if (decodedText.includes("000201") && decodedText.includes("A00000067701")) {
+                    handlePromptPay();
+                } 
+                // 3. Other (Product/Unknown)
+                else {
+                    Swal.fire('ข้อมูลไม่รู้จัก', 'คิวอาร์นี้ไม่ใช่ลิงก์เว็บหรือรายการพร้อมเพย์', 'info');
+                }
+            });
+        }
+
+        function handleURL(url) {
+            let sec = 5;
+            Swal.fire({
+                title: 'ตรวจพบเว็บไซต์',
+                html: `<div style="text-align:left; background:#eee; padding:10px; border-radius:8px; font-size:12px; margin-bottom:10px;">${url}</div>
+                       <p>กำลังจะพาคุณไปใน <b id="cd">5</b> วินาที</p>
+                       <small style="color:green">● เว็บไซต์ปลอดภัย</small>`,
+                timer: 5000,
+                timerProgressBar: true,
+                confirmButtonText: 'ไปทันที',
+                didOpen: () => {
+                    const timer = setInterval(() => {
+                        sec--;
+                        if(Swal.getHtmlContainer().querySelector('#cd')) 
+                            Swal.getHtmlContainer().querySelector('#cd').innerText = sec;
+                        if(sec <= 0) clearInterval(timer);
+                    }, 1000);
+                }
+            }).then(() => window.location.href = url);
+        }
+
+        function handlePromptPay() {
+            const banksHtml = BANK_LIST.map(b => `
+                <div class="bank-item" onclick="Swal.fire('เปิดแอป','กรุณาสแกนคิวอาร์ผ่านแอปธนาคารโดยตรง','success')">
+                    <img src="${b.icon}" class="bank-logo">
+                    <span>${b.name}</span>
+                </div>
+            `).join('');
+
+            Swal.fire({
+                title: 'พบรายการพร้อมเพย์',
+                html: `<p class="subtitle">เลือกธนาคารของคุณเพื่อชำระเงิน</p><div class="bank-grid">${banksHtml}</div>`,
+                showConfirmButton: false,
+                showCloseButton: true
+            });
+        }
+
+        // --- PAYMENT LOGIC ---
+
         function genQR(amount) {
-            if(!amount || amount <= 0) return Swal.fire('ผิดพลาด', 'ระบุยอดเงินให้ถูกต้อง', 'error');
+            if(!amount || amount <= 0) return Swal.fire('ผิดพลาด', 'ระบุยอดเงินที่ต้องการ', 'warning');
             currentAmount = parseFloat(amount);
             
             document.getElementById('step-1').classList.add('hidden');
@@ -203,25 +350,25 @@
 
         function startTimer(sec) {
             let time = sec;
+            if(timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 let m = Math.floor(time/60);
                 let s = time%60;
                 document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
                 if(--time < 0) {
                     clearInterval(timerInterval);
-                    Swal.fire('หมดเวลา', 'ทำรายการไม่สำเร็จในเวลาที่กำหนด', 'error').then(() => location.reload());
+                    Swal.fire('หมดเวลา', 'รายการหมดอายุแล้ว', 'error').then(() => location.reload());
                 }
             }, 1000);
         }
 
         function handleFile(input) {
             if (input.files && input.files[0]) {
-                document.getElementById('upload-label').innerText = "เลือกไฟล์เรียบร้อยแล้ว";
+                document.getElementById('upload-label').innerText = "เลือกสลิปแล้ว";
                 const reader = new FileReader();
                 reader.onload = e => {
-                    const pre = document.getElementById('preview');
-                    pre.src = e.target.result;
-                    pre.style.display = 'inline-block';
+                    document.getElementById('preview').src = e.target.result;
+                    document.getElementById('preview-container').style.display = 'block';
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -229,15 +376,14 @@
 
         async function verifyWithEasySlip() {
             const fileInput = document.getElementById('slip-input');
-            if (fileInput.files.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาแนบสลิปก่อน', 'warning');
+            if (fileInput.files.length === 0) return Swal.fire('ลืมแนบสลิป', 'กรุณาเลือกรูปสลิปก่อนยืนยัน', 'warning');
 
-            Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'กำลังตรวจสอบสลิป...', didOpen: () => Swal.showLoading(), allowOutsideClick: false });
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
             try {
-                // เรียกใช้ EasySlip API v2
                 const response = await fetch('https://developer.easyslip.com/api/v1/verify', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${EASYSLIP_API_KEY}` },
@@ -247,24 +393,19 @@
                 const res = await response.json();
 
                 if (response.status === 200 && res.status === 200) {
-                    const paidAmount = res.data.amount.amount;
-                    // ตรวจสอบยอดเงิน (เผื่อโอนขาดหรือเกิน)
-                    if (paidAmount >= currentAmount) {
+                    const paid = res.data.amount.amount;
+                    if (paid >= currentAmount) {
                         clearInterval(timerInterval);
-                        Swal.fire({
-                            title: 'ขอบคุณที่สนับสนุน!',
-                            text: 'ตรวจสอบข้อมูลสลิปถูกต้องเรียบร้อย',
-                            icon: 'success',
-                            confirmButtonText: 'กลับหน้าหลัก'
-                        }).then(() => window.location.href = "https://ramdev-004.web.app");
+                        Swal.fire('ขอบคุณครับ!', 'เราได้รับยอดเงินสนับสนุนของคุณแล้ว', 'success')
+                            .then(() => window.location.href = "https://ramdev-004.web.app");
                     } else {
-                        Swal.fire('ยอดเงินไม่ครบ', `ยอดที่ต้องโอนคือ ${currentAmount} แต่ในสลิปคือ ${paidAmount}`, 'error');
+                        Swal.fire('ยอดเงินไม่ถูกต้อง', `คุณโอนมา ${paid} บาท แต่ยอดที่แจ้งคือ ${currentAmount} บาท`, 'error');
                     }
                 } else {
-                    Swal.fire('ล้มเหลว :(', 'สลิปไม่ถูกต้อง หรือข้อมูลซ้ำซ้อน', 'error');
+                    Swal.fire('ตรวจสอบไม่สำเร็จ', 'สลิปไม่ถูกต้อง หรืออาจจะถูกใช้ไปแล้ว', 'error');
                 }
             } catch (err) {
-                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบ EasySlip ได้', 'error');
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ตรวจสอบได้', 'error');
             }
         }
     </script>
