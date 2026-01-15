@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donate Support - RamDev</title>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        :root {
+            --primary: #5e6ad2;
+            --success: #00c853;
+            --error: #ff5252;
+            --bg: #fdfdfd;
+            --text: #2c3e50;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #ffffff;
+            width: 90%;
+            max-width: 400px;
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+
+        .back-nav {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-link {
+            text-decoration: none;
+            color: #999;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .btn-link:hover { color: var(--primary); }
+
+        h2 { font-weight: 600; margin-bottom: 0.5rem; }
+        .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 2rem; }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .btn-opt {
+            border: 1.5px solid #eee;
+            background: none;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .btn-opt:hover { border-color: var(--primary); color: var(--primary); }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 1.5px solid #eee;
+            margin-bottom: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .qr-area {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 20px;
+            margin: 1.5rem 0;
+            display: none;
+        }
+
+        .qr-img { width: 100%; max-width: 200px; border-radius: 10px; }
+
+        .upload-box {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 1rem;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-box:hover { background: #f8f9ff; border-color: var(--primary); }
+
+        .timer { color: var(--error); font-weight: 600; margin-top: 10px; }
+
+        .btn-main {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        .hidden { display: none; }
+        .loading-spin { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 10px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="back-nav">
+            <a href="https://ramdev-004.web.app" class="btn-link">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:5px"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                กลับหน้าหลัก
+            </a>
+        </div>
+
+        <div id="step-1">
+            <h2>สนับสนุนเรา</h2>
+            <p class="subtitle">เลือกยอดเงินที่ต้องการโดเนท</p>
+            <div class="grid">
+                <button class="btn-opt" onclick="genQR(10)">10</button>
+                <button class="btn-opt" onclick="genQR(20)">20</button>
+                <button class="btn-opt" onclick="genQR(30)">30</button>
+                <button class="btn-opt" onclick="genQR(50)">50</button>
+                <button class="btn-opt" onclick="genQR(100)">100</button>
+                <button class="btn-opt" onclick="genQR(200)">200</button>
+            </div>
+            <input type="number" id="manual-amount" placeholder="ระบุยอดเงินเอง">
+            <button class="btn-main" onclick="genQR(document.getElementById('manual-amount').value)">สร้างรายการ</button>
+        </div>
+
+        <div id="step-2" class="hidden">
+            <h3 id="target-txt">ยอดชำระ 0.00 บาท</h3>
+            <div class="qr-area" id="qr-block">
+                <div id="loader" class="loading-spin"></div>
+                <img id="qr-display" class="qr-img" src="" alt="QR">
+                <div class="timer" id="timer">05:00</div>
+            </div>
+
+            <div class="upload-box" onclick="document.getElementById('slip-input').click()">
+                <span id="upload-label">คลิกเพื่อแนบสลิป</span>
+                <input type="file" id="slip-input" class="hidden" accept="image/*" onchange="handleFile(this)">
+                <img id="preview" style="display:none; width:50px; margin-top:10px; border-radius:5px;">
+            </div>
+
+            <button id="verify-btn" class="btn-main" onclick="verifyWithEasySlip()" style="background: var(--success);">ยืนยันการโอน</button>
+            <button class="btn-link" onclick="location.reload()" style="margin: 15px auto; display: block;">ยกเลิกรายการ</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const MY_PROMPTPAY_ID = "0987943610"; // เบอร์พร้อมเพย์
+        const EASYSLIP_API_KEY = "2f61c12e-b343-4738-83b8-ba11fe8e9ae6"; // เอาจาก easyslip.com
+        // --------------
+
+        let currentAmount = 0;
+        let timerInterval;
+
+        function genQR(amount) {
+            if(!amount || amount <= 0) return Swal.fire('ผิดพลาด', 'ระบุยอดเงินให้ถูกต้อง', 'error');
+            currentAmount = parseFloat(amount);
+            
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
+            document.getElementById('target-txt').innerText = `ยอดชำระ ${currentAmount.toFixed(2)} บาท`;
+            
+            const qrUrl = `https://promptpay.io/${MY_PROMPTPAY_ID}/${currentAmount}.png`;
+            const qrImg = document.getElementById('qr-display');
+            
+            document.getElementById('qr-block').style.display = 'block';
+            qrImg.src = qrUrl;
+            qrImg.onload = () => {
+                document.getElementById('loader').classList.add('hidden');
+                qrImg.classList.remove('hidden');
+                startTimer(300);
+            };
+        }
+
+        function startTimer(sec) {
+            let time = sec;
+            timerInterval = setInterval(() => {
+                let m = Math.floor(time/60);
+                let s = time%60;
+                document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                if(--time < 0) {
+                    clearInterval(timerInterval);
+                    Swal.fire('หมดเวลา', 'ทำรายการไม่สำเร็จในเวลาที่กำหนด', 'error').then(() => location.reload());
+                }
+            }, 1000);
+        }
+
+        function handleFile(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('upload-label').innerText = "เลือกไฟล์เรียบร้อยแล้ว";
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const pre = document.getElementById('preview');
+                    pre.src = e.target.result;
+                    pre.style.display = 'inline-block';
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        async function verifyWithEasySlip() {
+            const fileInput = document.getElementById('slip-input');
+            if (fileInput.files.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาแนบสลิปก่อน', 'warning');
+
+            Swal.fire({ title: 'กำลังตรวจสอบ...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                // เรียกใช้ EasySlip API v2
+                const response = await fetch('https://developer.easyslip.com/api/v1/verify', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${EASYSLIP_API_KEY}` },
+                    body: formData
+                });
+
+                const res = await response.json();
+
+                if (response.status === 200 && res.status === 200) {
+                    const paidAmount = res.data.amount.amount;
+                    // ตรวจสอบยอดเงิน (เผื่อโอนขาดหรือเกิน)
+                    if (paidAmount >= currentAmount) {
+                        clearInterval(timerInterval);
+                        Swal.fire({
+                            title: 'ขอบคุณที่สนับสนุน!',
+                            text: 'ตรวจสอบข้อมูลสลิปถูกต้องเรียบร้อย',
+                            icon: 'success',
+                            confirmButtonText: 'กลับหน้าหลัก'
+                        }).then(() => window.location.href = "https://ramdev-004.web.app");
+                    } else {
+                        Swal.fire('ยอดเงินไม่ครบ', `ยอดที่ต้องโอนคือ ${currentAmount} แต่ในสลิปคือ ${paidAmount}`, 'error');
+                    }
+                } else {
+                    Swal.fire('ล้มเหลว :(', 'สลิปไม่ถูกต้อง หรือข้อมูลซ้ำซ้อน', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบ EasySlip ได้', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
