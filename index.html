@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Donate Support - RamDev</title>
-    
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
-    
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     
     <style>
         :root {
             --primary: #5e6ad2;
+            --primary-hover: #4b56b2;
             --success: #00c853;
             --error: #ff5252;
-            --bg: #f8f9fa;
+            --bg: #f5f7fa;
+            --card-bg: #ffffff;
             --text: #2c3e50;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
         }
 
         body {
@@ -28,69 +29,81 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            overflow-x: hidden;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
-        /* ปุ่มย้อนกลับ (ซ้ายบน) */
-        .back-trigger {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            background: #ffffff;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: 0.3s;
-            z-index: 1000;
-            color: var(--text);
-            text-decoration: none; /* เอาขีดเส้นใต้ลิงก์ออก */
-        }
-        .back-trigger:hover { 
-            background: #f0f0f0; 
-            transform: scale(1.05); 
-        }
-
-        /* ปุ่มสแกน (ขวาบน) */
-        .scan-trigger {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: var(--primary); /* เปลี่ยนเป็นสีหลักให้เด่น */
-            color: white;
-            border: none;
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(94, 106, 210, 0.4);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: 0.3s;
-            z-index: 1000;
-        }
-        .scan-trigger:hover { transform: scale(1.1) rotate(10deg); }
-
+        /* --- Card Design --- */
         .card {
-            background: #ffffff;
-            width: 90%;
-            max-width: 400px;
-            padding: 2.5rem 2rem;
-            border-radius: 28px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.07);
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 420px;
+            padding: 2.5rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
             text-align: center;
             position: relative;
+            overflow: hidden;
         }
 
-        h2 { font-weight: 600; margin: 0 0 0.5rem 0; }
-        .subtitle { color: #888; font-size: 0.9rem; margin-bottom: 1.5rem; }
+        /* --- Navigation Button (Back Button) --- */
+        .nav-header {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 2rem;
+        }
 
+        .btn-back-nav {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+            background-color: #f1f5f9;
+            padding: 10px 20px;
+            border-radius: 50px; /* Pill Shape */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-back-nav svg {
+            margin-right: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-back-nav:hover {
+            background-color: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(94, 106, 210, 0.3);
+        }
+
+        .btn-back-nav:hover svg {
+            transform: translateX(-3px);
+        }
+
+        /* --- Headings --- */
+        h2 { 
+            font-weight: 600; 
+            margin: 0 0 0.5rem 0; 
+            color: var(--text);
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            font-weight: 600;
+            margin: 0 0 1rem 0;
+            color: var(--text);
+        }
+
+        .subtitle { 
+            color: var(--text-secondary); 
+            font-size: 0.95rem; 
+            margin-bottom: 2rem; 
+            font-weight: 300;
+        }
+
+        /* --- Grid & Options --- */
         .grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -99,373 +112,314 @@
         }
 
         .btn-opt {
-            border: 1.5px solid #eee;
-            background: none;
-            padding: 12px;
-            border-radius: 15px;
+            border: 1.5px solid var(--border);
+            background: #fff;
+            padding: 15px;
+            border-radius: 16px;
             cursor: pointer;
-            font-family: inherit;
-            transition: 0.2s;
+            font-family: 'Prompt', sans-serif;
+            font-size: 1.1rem;
             font-weight: 500;
-            color: #666;
+            color: var(--text);
+            transition: all 0.2s ease;
         }
-        .btn-opt:hover { border-color: var(--primary); color: var(--primary); background: #f8f9ff; }
 
+        .btn-opt:hover { 
+            border-color: var(--primary); 
+            color: var(--primary); 
+            background-color: #f8f9ff;
+            transform: translateY(-2px);
+        }
+
+        .btn-opt:active {
+            transform: scale(0.95);
+        }
+
+        /* --- Inputs --- */
         input[type="number"] {
             width: 100%;
-            padding: 14px;
-            border-radius: 14px;
-            border: 1.5px solid #eee;
+            padding: 16px;
+            border-radius: 16px;
+            border: 1.5px solid var(--border);
             margin-bottom: 1rem;
             box-sizing: border-box;
             text-align: center;
             font-size: 1.1rem;
-            font-family: inherit;
+            font-family: 'Prompt', sans-serif;
+            transition: 0.3s;
             outline: none;
         }
-        input[type="number"]:focus { border-color: var(--primary); }
 
+        input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(94, 106, 210, 0.1);
+        }
+
+        /* --- QR Area --- */
         .qr-area {
-            background: #f9f9f9;
+            background: #f8faff;
             padding: 20px;
             border-radius: 20px;
             margin: 1.5rem 0;
+            border: 1px dashed var(--primary);
             display: none;
+            position: relative;
         }
 
-        .qr-img { width: 100%; max-width: 180px; border-radius: 10px; margin: 0 auto; display: block; }
+        .qr-img { 
+            width: 100%; 
+            max-width: 220px; 
+            border-radius: 12px; 
+            mix-blend-mode: multiply;
+        }
 
+        /* --- Upload Box --- */
         .upload-box {
-            border: 2px dashed #ddd;
-            padding: 20px;
-            border-radius: 15px;
+            border: 2px dashed #cbd5e1;
+            padding: 25px;
+            border-radius: 16px;
             margin-top: 1rem;
             cursor: pointer;
-            transition: 0.2s;
+            position: relative;
+            background-color: #fafafa;
+            transition: 0.3s;
         }
-        .upload-box:hover { border-color: var(--primary); background: #f8f9ff; }
 
+        .upload-box:hover { 
+            background: #f1f5f9; 
+            border-color: var(--primary); 
+        }
+        
+        .upload-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .upload-icon {
+            color: var(--text-secondary);
+        }
+
+        /* --- Buttons --- */
         .btn-main {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             background: var(--primary);
             color: white;
             border: none;
-            border-radius: 14px;
+            border-radius: 16px;
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             margin-top: 1rem;
-            transition: 0.2s;
-            box-shadow: 0 4px 12px rgba(94, 106, 210, 0.3);
+            box-shadow: 0 10px 20px rgba(94, 106, 210, 0.2);
+            transition: all 0.2s;
+            font-family: 'Prompt', sans-serif;
         }
-        .btn-main:active { transform: scale(0.98); }
 
-        /* Scanner Styles */
-        #reader { width: 100% !important; border-radius: 15px; overflow: hidden; margin-bottom: 10px; }
-        
-        .bank-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            padding: 10px 0;
+        .btn-main:hover {
+            background: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(94, 106, 210, 0.3);
         }
-        .bank-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 11px;
+
+        .btn-success {
+            background: var(--success);
+            box-shadow: 0 10px 20px rgba(0, 200, 83, 0.2);
+        }
+        .btn-success:hover {
+            background: #00b34a;
+            box-shadow: 0 15px 30px rgba(0, 200, 83, 0.3);
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 2px solid transparent;
+            border-radius: 16px;
+            font-size: 0.95rem;
+            font-weight: 500;
             cursor: pointer;
-            transition: transform 0.1s;
-            color: #333;
-            text-decoration: none;
-        }
-        .bank-item:active { transform: scale(0.95); }
-        .bank-logo {
-            width: 50px;
-            height: 50px;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            object-fit: cover;
-            background: #fff;
+            margin-top: 10px;
+            font-family: 'Prompt', sans-serif;
+            transition: 0.2s;
         }
 
+        .btn-secondary:hover {
+            color: var(--text);
+            background: #f1f5f9;
+        }
+
+        /* --- Utilities --- */
+        .timer { 
+            color: var(--error); 
+            font-weight: 600; 
+            margin-top: 15px; 
+            font-size: 1.1rem;
+            background: #fff0f0;
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 30px;
+        }
+        
         .hidden { display: none; }
-        .timer { color: var(--error); font-weight: 600; margin-top: 10px; }
+        
+        .loading-spin { 
+            border: 3px solid #f3f3f3; 
+            border-top: 3px solid var(--primary); 
+            border-radius: 50%; 
+            width: 30px; 
+            height: 30px; 
+            animation: spin 1s linear infinite; 
+            margin: 20px auto; 
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
-    <a href="https://ramdev-004.web.app/" class="back-trigger">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5"></path>
-            <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-    </a>
-
-    <button class="scan-trigger" onclick="openScanner()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="4 7 4 4 7 4"></polyline>
-            <polyline points="17 4 20 4 20 7"></polyline>
-            <polyline points="20 17 20 20 17 20"></polyline>
-            <polyline points="7 20 4 20 4 17"></polyline>
-            <line x1="12" y1="8" x2="12" y2="16"></line>
-            <line x1="8" y1="12" x2="16" y2="12"></line>
-        </svg>
-    </button>
-
     <div class="card">
+        <div class="nav-header">
+            <a href="https://ramdev-004.web.app" class="btn-back-nav">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                กลับหน้าหลักเว็บไซต์
+            </a>
+        </div>
+
         <div id="step-1">
-            <h2>สนับสนุน Ram DEV</h2>
-            <p class="subtitle">เลือกจำนวนเงินที่ต้องการสนับสนุน</p>
+            <h2>สนับสนุนเรา</h2>
+            <p class="subtitle">เลือกยอดเงินที่ต้องการโดเนท</p>
+            
             <div class="grid">
                 <button class="btn-opt" onclick="genQR(10)">10</button>
                 <button class="btn-opt" onclick="genQR(20)">20</button>
+                <button class="btn-opt" onclick="genQR(30)">30</button>
                 <button class="btn-opt" onclick="genQR(50)">50</button>
                 <button class="btn-opt" onclick="genQR(100)">100</button>
-                <button class="btn-opt" onclick="genQR(300)">300</button>
-                <button class="btn-opt" onclick="genQR(500)">500</button>
+                <button class="btn-opt" onclick="genQR(200)">200</button>
             </div>
-            <input type="number" id="manual-amount" placeholder="ระบุจำนวนเงินเอง (บาท)">
-            <button class="btn-main" onclick="genQR(document.getElementById('manual-amount').value)">สร้าง QR Code</button>
+            
+            <input type="number" id="manual-amount" placeholder="ระบุยอดเงินเอง (บาท)">
+            <button class="btn-main" onclick="genQR(document.getElementById('manual-amount').value)">สร้างรายการ QR Code</button>
         </div>
 
         <div id="step-2" class="hidden">
-            <h3 id="target-txt">ยอดชำระ 0.00 บาท</h3>
-            <div class="qr-area" id="qr-block">
-                <img id="qr-display" class="qr-img" src="" alt="QR">
-                <div class="timer" id="timer">05:00</div>
-            </div>
+            <h3 id="target-txt" style="color:var(--primary);">ยอดชำระ 0.00 บาท</h3>
             
-            <div class="upload-box" onclick="document.getElementById('slip-input').click()">
-                <div id="upload-content">
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" style="margin-bottom:5px;">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <br>
-                    <span id="upload-label" style="font-size:0.9rem; color:#666;">แตะเพื่อแนบสลิป</span>
-                </div>
-                <input type="file" id="slip-input" class="hidden" accept="image/*" onchange="handleFile(this)">
-                <img id="preview" style="display:none; width:100%; border-radius:10px; margin-top:10px;">
+            <div class="qr-area" id="qr-block">
+                <div id="loader" class="loading-spin"></div>
+                <img id="qr-display" class="qr-img hidden" src="" alt="PromptPay QR">
+                <div><div class="timer" id="timer">05:00</div></div>
             </div>
 
-            <button class="btn-main" onclick="verifyWithEasySlip()" style="background: var(--success);">ยืนยันการโอนเงิน</button>
-            <button onclick="location.reload()" style="background:none; border:none; color:#999; cursor:pointer; margin-top:15px; font-size:0.9rem;">ยกเลิกรายการ</button>
+            <p style="font-size:0.9rem; color:#888; margin-bottom:10px;">กรุณาแนบสลิปเพื่อยืนยัน</p>
+
+            <div class="upload-box" onclick="document.getElementById('slip-input').click()">
+                <div class="upload-content" id="upload-content">
+                    <svg class="upload-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <span id="upload-label">คลิกเพื่อแนบสลิป</span>
+                </div>
+                <input type="file" id="slip-input" class="hidden" accept="image/*" onchange="handleFile(this)">
+                <img id="preview" style="display:none; width:100%; max-height:150px; object-fit:contain; border-radius:8px; margin-top:0;">
+            </div>
+
+            <button id="verify-btn" class="btn-main btn-success" onclick="verifyWithEasySlip()">ยืนยันการโอนเงิน</button>
+            <button class="btn-secondary" onclick="resetFlow()">← ย้อนกลับไปแก้ไขยอดเงิน</button>
         </div>
     </div>
 
     <script>
-        // --- CONFIGURATION ---
-        const MY_PROMPTPAY_ID = "0987943610"; // เบอร์พร้อมเพย์รับเงิน
-        const EASYSLIP_API_KEY = "2f61c12e-b343-4738-83b8-ba11fe8e9ae6";
+        // --- CONFIG ---
+        const MY_PROMPTPAY_ID = "0987943610"; 
+        const EASYSLIP_API_KEY = "2f61c12e-b343-4738-83b8-ba11fe8e9ae6"; 
+        // --------------
 
-        // โลโก้ธนาคาร (ใช้ URL จาก Repo ที่เชื่อถือได้)
-        const LOGO_BASE = "https://raw.githubusercontent.com/guidea/thai-bank-logo/master/official";
-        
-        const BANKS = [
-            { name: 'K PLUS', scheme: 'kplus://', logo: `${LOGO_BASE}/kbank.png` },
-            { name: 'SCB EASY', scheme: 'scbeasy://', logo: `${LOGO_BASE}/scb.png` },
-            { name: 'Krungthai', scheme: 'ktbnext://', logo: `${LOGO_BASE}/ktb.png` },
-            { name: 'Bualuang', scheme: 'bualuangmbanking://', logo: `${LOGO_BASE}/bbl.png` },
-            { name: 'KMA', scheme: 'kma://', logo: `${LOGO_BASE}/bay.png` },
-            { name: 'ttb touch', scheme: 'ttb://', logo: `${LOGO_BASE}/ttb.png` }
-        ];
-
-        let html5QrCode;
         let currentAmount = 0;
         let timerInterval;
-        let isScanProcessing = false; // ตัวแปรสำคัญ: ป้องกัน Loop
-
-        // --- SCANNER SYSTEM ---
-
-        async function openScanner() {
-            // เช็ค HTTPS
-            if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-                return Swal.fire({
-                    icon: 'error',
-                    title: 'ข้อผิดพลาด',
-                    text: 'จำเป็นต้องใช้งานผ่าน HTTPS เพื่อเปิดกล้อง'
-                });
-            }
-
-            isScanProcessing = false; // รีเซ็ตสถานะ
-
-            Swal.fire({
-                title: 'สแกน QR Code',
-                html: '<div id="reader"></div><small style="color:#888">สแกน QR PromptPay เพื่อเปิดแอปธนาคาร</small>',
-                showConfirmButton: false,
-                showCloseButton: true,
-                allowOutsideClick: false,
-                didOpen: () => {
-                    html5QrCode = new Html5Qrcode("reader");
-                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-                    
-                    // เริ่มกล้อง
-                    html5QrCode.start({ facingMode: "environment" }, config, onScanSuccess)
-                    .catch(err => {
-                        Swal.fire('เปิดกล้องไม่ได้', 'กรุณาอนุญาตการเข้าถึงกล้องใน Browser', 'error');
-                    });
-                },
-                willClose: () => {
-                    if(html5QrCode && html5QrCode.isScanning) {
-                        html5QrCode.stop().catch(err => console.log(err));
-                    }
-                }
-            });
-        }
-
-        function onScanSuccess(decodedText) {
-            // *** FIX LOOP: ถ้ากำลังประมวลผลอยู่ ให้หยุดทำงานทันที ***
-            if (isScanProcessing) return;
-            isScanProcessing = true; // ล็อกสถานะ
-
-            // หยุดกล้องชั่วคราว (Pause) เพื่อไม่ให้สแกนซ้ำ
-            html5QrCode.pause();
-
-            // ปิดหน้าต่างสแกนเดิมก่อน เพื่อเปิด Popup ผลลัพธ์
-            // Swal.close(); // (Optional: ถ้าอยากปิดกล้องเลยให้ใช้บรรทัดนี้)
-
-            if (decodedText.startsWith('000201')) { 
-                // เคส: เป็น PromptPay QR Code
-                handlePromptPayAction();
-            } else if (decodedText.startsWith('http')) {
-                // เคส: เป็น Link เว็บไซต์
-                handleUrlAction(decodedText);
-            } else {
-                // เคส: ไม่รู้จัก
-                Swal.fire({
-                    icon: 'question',
-                    title: 'ไม่รู้จัก QR Code นี้',
-                    text: decodedText,
-                    confirmButtonText: 'สแกนใหม่',
-                    confirmButtonColor: '#5e6ad2'
-                }).then(() => {
-                    // กลับไปสแกนต่อ
-                    isScanProcessing = false;
-                    html5QrCode.resume();
-                });
-            }
-        }
-
-        function handlePromptPayAction() {
-            // สร้าง Grid ปุ่มธนาคาร
-            let bankHtml = '';
-            BANKS.forEach(bank => {
-                bankHtml += `
-                    <div class="bank-item" onclick="openBankApp('${bank.scheme}')">
-                        <img src="${bank.logo}" class="bank-logo">
-                        <span>${bank.name}</span>
-                    </div>
-                `;
-            });
-
-            Swal.fire({
-                title: 'พบ PromptPay!',
-                html: `
-                    <p style="font-size:0.9rem; color:#666;">เลือกธนาคารเพื่อเปิดแอปโอนเงิน</p>
-                    <div class="bank-grid">${bankHtml}</div>
-                `,
-                showCloseButton: true,
-                showConfirmButton: false,
-                allowOutsideClick: false
-            }).then((result) => {
-                // เมื่อปิด Popup นี้ ให้กลับไปสแกนต่อ (หรือจะปิดกล้องก็ได้ แล้วแต่ดีไซน์)
-                // ในที่นี้เลือกให้กลับไปสแกนต่อเผื่อลูกค้ากดปิดผิด
-                isScanProcessing = false;
-                html5QrCode.resume();
-            });
-        }
-
-        function handleUrlAction(url) {
-            Swal.fire({
-                title: 'พบลิงก์เว็บไซต์',
-                text: url,
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonText: 'ไปที่เว็บไซต์',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#00c853'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = url;
-                } else {
-                    isScanProcessing = false;
-                    html5QrCode.resume();
-                }
-            });
-        }
-
-        function openBankApp(scheme) {
-            // พยายามเปิด Deep Link
-            window.location.href = scheme;
-            
-            // แสดงข้อความช่วยเหลือกรณีเปิดไม่ได้ (เพราะ JS เช็คไม่ได้ว่าเปิดสำเร็จไหม)
-            /* setTimeout(() => {
-                 Swal.fire('เปิดแอปไม่ได้?', 'โปรดตรวจสอบว่าคุณมีแอปธนาคารนี้ในเครื่องหรือไม่', 'question');
-            }, 1500); */
-        }
-
-        // --- DONATION LOGIC ---
 
         function genQR(amount) {
-            if(!amount || amount <= 0) return Swal.fire('ข้อมูลไม่ถูกต้อง', 'กรุณาระบุจำนวนเงิน', 'warning');
-            
+            if(!amount || amount <= 0) return Swal.fire({
+                icon: 'warning',
+                title: 'ยอดเงินไม่ถูกต้อง',
+                text: 'กรุณาระบุจำนวนเงินที่มากกว่า 0',
+                confirmButtonColor: '#5e6ad2'
+            });
+
             currentAmount = parseFloat(amount);
             
-            // สลับหน้า View
+            // Switch Step
             document.getElementById('step-1').classList.add('hidden');
             document.getElementById('step-2').classList.remove('hidden');
-            
-            // อัปเดตข้อมูล
             document.getElementById('target-txt').innerText = `ยอดชำระ ${currentAmount.toFixed(2)} บาท`;
             
-            // สร้าง QR (PromptPay Payload)
-            const qrUrl = `https://promptpay.io/${MY_PROMPTPAY_ID}/${currentAmount}.png`;
-            document.getElementById('qr-block').style.display = 'block';
-            document.getElementById('qr-display').src = qrUrl;
+            // Reset Upload State
+            document.getElementById('preview').style.display = 'none';
+            document.getElementById('upload-content').style.display = 'flex';
+            document.getElementById('upload-label').innerText = "คลิกเพื่อแนบสลิป";
+            document.getElementById('slip-input').value = "";
 
-            // เริ่มจับเวลา
-            startTimer(300); // 5 นาที
+            // Generate QR
+            const qrUrl = `https://promptpay.io/${MY_PROMPTPAY_ID}/${currentAmount}.png`;
+            const qrImg = document.getElementById('qr-display');
+            const loader = document.getElementById('loader');
+            
+            document.getElementById('qr-block').style.display = 'block';
+            loader.classList.remove('hidden');
+            qrImg.classList.add('hidden');
+
+            qrImg.src = qrUrl;
+            qrImg.onload = () => {
+                loader.classList.add('hidden');
+                qrImg.classList.remove('hidden');
+                startTimer(300);
+            };
         }
 
-        function startTimer(duration) {
-            let timer = duration, minutes, seconds;
-            const display = document.getElementById('timer');
+        function startTimer(sec) {
+            clearInterval(timerInterval); // Clear existing timer if any
+            let time = sec;
+            updateTimerDisplay(time);
             
-            clearInterval(timerInterval); // เคลียร์ของเก่าถ้ามี
-            
-            timerInterval = setInterval(function () {
-                minutes = parseInt(timer / 60, 10);
-                seconds = parseInt(timer % 60, 10);
-
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-                seconds = seconds < 10 ? "0" + seconds : seconds;
-
-                display.textContent = minutes + ":" + seconds;
-
-                if (--timer < 0) {
+            timerInterval = setInterval(() => {
+                time--;
+                updateTimerDisplay(time);
+                if(time < 0) {
                     clearInterval(timerInterval);
                     Swal.fire({
                         title: 'หมดเวลา',
-                        text: 'กรุณาทำรายการใหม่',
+                        text: 'กรุณาทำรายการใหม่อีกครั้ง',
                         icon: 'error',
-                        confirmButtonText: 'ตกลง'
-                    }).then(() => location.reload());
+                        confirmButtonColor: '#5e6ad2'
+                    }).then(() => resetFlow());
                 }
             }, 1000);
         }
 
+        function updateTimerDisplay(time) {
+            if(time < 0) time = 0;
+            let m = Math.floor(time/60);
+            let s = time%60;
+            document.getElementById('timer').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function resetFlow() {
+            clearInterval(timerInterval);
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-1').classList.remove('hidden');
+        }
+
         function handleFile(input) {
             if (input.files && input.files[0]) {
+                document.getElementById('upload-label').innerText = "เลือกไฟล์เรียบร้อยแล้ว";
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('upload-content').style.display = 'none';
+                reader.onload = e => {
                     const pre = document.getElementById('preview');
                     pre.src = e.target.result;
                     pre.style.display = 'block';
+                    document.getElementById('upload-content').style.display = 'none'; // Hide icon/text
                 }
                 reader.readAsDataURL(input.files[0]);
             }
@@ -473,51 +427,47 @@
 
         async function verifyWithEasySlip() {
             const fileInput = document.getElementById('slip-input');
-            if (fileInput.files.length === 0) {
-                return Swal.fire('แจ้งเตือน', 'กรุณาแนบรูปสลิปก่อนกดยืนยัน', 'warning');
-            }
+            if (fileInput.files.length === 0) return Swal.fire('แจ้งเตือน', 'กรุณาแนบสลิปการโอนเงินก่อน', 'warning');
 
-            Swal.fire({
-                title: 'กำลังตรวจสอบ...',
-                text: 'กรุณารอสักครู่ ระบบกำลังเช็คยอดเงินกับธนาคาร',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
+            Swal.fire({ 
+                title: 'กำลังตรวจสอบ...', 
+                text: 'กรุณารอสักครู่',
+                allowOutsideClick: false, 
+                didOpen: () => Swal.showLoading() 
             });
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
 
             try {
-                // Call API
                 const response = await fetch('https://developer.easyslip.com/api/v1/verify', {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${EASYSLIP_API_KEY}` },
                     body: formData
                 });
+
                 const res = await response.json();
 
                 if (response.status === 200 && res.status === 200) {
-                    // เช็คยอดเงิน
-                    if (res.data.amount.amount >= currentAmount) {
+                    const paidAmount = res.data.amount.amount;
+                    if (paidAmount >= currentAmount) {
                         clearInterval(timerInterval);
                         Swal.fire({
+                            title: 'ขอบคุณที่สนับสนุน!',
+                            text: 'เราได้รับยอดเงินเรียบร้อยแล้ว',
                             icon: 'success',
-                            title: 'ได้รับเงินแล้ว!',
-                            text: 'ขอบคุณสำหรับการสนับสนุนครับ',
+                            confirmButtonColor: '#00c853',
                             confirmButtonText: 'กลับหน้าหลัก'
-                        }).then(() => {
-                            window.location.href = "https://ramdev-004.web.app";
-                        });
+                        }).then(() => window.location.href = "https://ramdev-004.web.app");
                     } else {
-                        Swal.fire('ยอดเงินไม่ครบ', `ระบบตรวจพบยอด ${res.data.amount.amount} บาท (จากที่ต้องโอน ${currentAmount} บาท)`, 'error');
+                        Swal.fire('ยอดเงินไม่ครบ', `ยอดที่ต้องโอนคือ ${currentAmount} แต่ในสลิปคือ ${paidAmount}`, 'error');
                     }
                 } else {
-                    // กรณีสลิปซ้ำ หรือ ไม่พบข้อมูล
-                    Swal.fire('ตรวจสอบไม่ผ่าน', 'ไม่พบข้อมูลรายการโอน หรือสลิปนี้ถูกใช้ไปแล้ว', 'error');
+                    Swal.fire('ตรวจสอบไม่สำเร็จ', 'สลิปไม่ถูกต้อง หรือถูกใช้งานไปแล้ว', 'error');
                 }
             } catch (err) {
                 console.error(err);
-                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อ Server ตรวจสอบสลิปได้', 'error');
+                Swal.fire('Error', 'ไม่สามารถเชื่อมต่อระบบตรวจสอบสลิปได้', 'error');
             }
         }
     </script>
