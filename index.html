@@ -3,219 +3,578 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Face Scanner</title>
+  <title>สแกนใบหน้า</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      margin: 0; padding: 0; background-color: #111; color: white;
-      font-family: 'Prompt', sans-serif; overflow: hidden;
-      display: none; /* ซ่อนค่าเริ่มต้น ถ้าไม่มีข้อมูลส่งมาจะเป็นหน้าจอดำ */
-      justify-content: center; align-items: center; height: 100vh; flex-direction: column;
+      font-family: 'Prompt', sans-serif;
+      background: #0a0a0a;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
-    #scanner-container {
-      position: relative; border-radius: 20px; overflow: hidden;
-      border: 4px solid #0d6efd; width: 90%; max-width: 400px; height: 350px;
+
+    /* ===== หน้าว่าง (เข้าเปล่า) ===== */
+    #emptyPage {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #0a0a0a;
     }
-    video, canvas {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      object-fit: cover; transform: scaleX(-1);
+    #emptyPage .lock-icon {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      opacity: 0.15;
     }
-    #instruction { margin-bottom: 20px; font-weight: bold; text-align: center; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
-    .btn-cancel { margin-top: 20px; padding: 10px 30px; border-radius: 20px; background: #dc3545; color: white; border: none; font-size: 1rem; cursor: pointer; }
+
+    /* ===== หน้าสแกน ===== */
+    #scanPage {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100vh;
+      position: relative;
+    }
+
     #colorFlashOverlay {
-      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      opacity: 0; z-index: 999; pointer-events: none; transition: all 0.15s ease;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      opacity: 0;
+      z-index: 100;
+      pointer-events: none;
+      transition: all 0.15s ease;
+    }
+
+    .scan-header {
+      text-align: center;
+      margin-bottom: 20px;
+      z-index: 101;
+    }
+    .scan-header .subtitle {
+      font-size: 0.85rem;
+      color: #6b7280;
+      margin-top: 4px;
+    }
+
+    #faceScanInstruction {
+      font-size: 1.3rem;
+      font-weight: 700;
+      text-align: center;
+      color: #fff;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+      margin-bottom: 18px;
+      min-height: 2rem;
+      z-index: 101;
+      transition: color 0.3s ease;
+    }
+
+    .camera-container {
+      position: relative;
+      z-index: 101;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 3px solid #3b82f6;
+      box-shadow: 0 0 40px rgba(59, 130, 246, 0.4);
+      width: 90%;
+      max-width: 380px;
+      height: 320px;
+      background: #111;
+    }
+    .camera-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        transparent 60%,
+        rgba(59, 130, 246, 0.12)
+      );
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* scan line animation */
+    .scan-line {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+      animation: scanLine 2.5s linear infinite;
+      z-index: 3;
+      pointer-events: none;
+    }
+    @keyframes scanLine {
+      0% { top: 0; opacity: 1; }
+      90% { opacity: 1; }
+      100% { top: 100%; opacity: 0; }
+    }
+
+    #faceVideo {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+    #faceCanvas {
+      position: absolute; top: 0; left: 0;
+      transform: scaleX(-1);
+      display: none;
+    }
+
+    /* progress steps */
+    .steps-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 20px;
+      z-index: 101;
+    }
+    .step-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      transition: all 0.4s ease;
+    }
+    .step-dot.active {
+      background: #3b82f6;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+      transform: scale(1.3);
+    }
+    .step-dot.done {
+      background: #10b981;
+    }
+
+    #cancelBtn {
+      margin-top: 24px;
+      z-index: 101;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: #fff;
+      border-radius: 20px;
+      padding: 10px 32px;
+      font-family: 'Prompt', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    #cancelBtn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+    }
+
+    /* result overlay */
+    #resultOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    #resultOverlay.show { display: flex; }
+    .result-icon {
+      font-size: 5rem;
+      margin-bottom: 1rem;
+      animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .result-text { font-size: 1.4rem; font-weight: 700; }
+    .result-sub { font-size: 0.9rem; color: #9ca3af; margin-top: 8px; }
+
+    /* loading */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10,10,10,0.9);
+      z-index: 300;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .spinner {
+      width: 48px; height: 48px;
+      border: 4px solid rgba(59,130,246,0.2);
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Responsive ===== */
+    @media (max-height: 600px) {
+      .camera-container { height: 260px; }
+      #faceScanInstruction { font-size: 1.1rem; }
     }
   </style>
 </head>
 <body>
 
-  <h3 id="instruction">กำลังโหลดข้อมูล...</h3>
-  <div id="scanner-container">
-    <video id="faceVideo" autoplay muted playsinline></video>
-    <canvas id="faceCanvas"></canvas>
-    <div id="colorFlashOverlay"></div>
+  <!-- หน้าว่าง (เข้าเปล่า) -->
+  <div id="emptyPage">
+    <div class="lock-icon">🔒</div>
   </div>
-  <button class="btn-cancel" onclick="goBack()">ยกเลิก / กลับ</button>
+
+  <!-- หน้าสแกน -->
+  <div id="scanPage">
+    <div id="colorFlashOverlay"></div>
+
+    <div class="scan-header">
+      <div class="subtitle" id="userLabel"></div>
+    </div>
+
+    <div id="faceScanInstruction">กำลังโหลดโมเดล AI...</div>
+
+    <div class="camera-container">
+      <div class="scan-line"></div>
+      <video id="faceVideo" autoplay muted playsinline></video>
+      <canvas id="faceCanvas"></canvas>
+    </div>
+
+    <div class="steps-row" id="stepsRow"></div>
+
+    <button id="cancelBtn" onclick="cancelScan()">ยกเลิก</button>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingOverlay">
+    <div class="spinner"></div>
+    <div style="color:#9ca3af; font-size:0.9rem;">กำลังประมวลผล...</div>
+  </div>
+
+  <!-- Result -->
+  <div id="resultOverlay">
+    <div class="result-icon" id="resultIcon"></div>
+    <div class="result-text" id="resultText"></div>
+    <div class="result-sub" id="resultSub"></div>
+  </div>
 
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const mode = urlParams.get('mode');
-    const studentId = urlParams.get('id');
-    const studentName = urlParams.get('name') || "";
-    const studentEmail = urlParams.get('email') || "";
-    const gasApi = urlParams.get('gasApi');
-    const returnUrl = urlParams.get('returnUrl');
+    // ==========================================
+    // รับ params จาก opener (Apps Script)
+    // ==========================================
+    var params = {};
+    var openerOrigin = '';
+    var scanMode = '';            // 'login' | 'admin'
+    var savedDescriptor = null;   // Float32Array (login)
+    var adminTargetId = '';       // (admin)
+    var faceModelsLoaded = false;
+    var faceVideo, scanInterval;
+    var livenessActions = [];
+    var currentActionIdx = 0;
+    var blinkCount = 0, eyeOpenStatus = true, nodStartY = 0, isNoddingDown = false;
 
-    let savedDescriptor = null;
-    let scanInterval;
-    let livenessActions = [];
-    let currentActionIdx = 0, blinkCount = 0, eyeOpenStatus = true, nodStartY = 0, isNoddingDown = false;
+    // ==========================================
+    // เริ่มต้น: รอรับ params จาก opener
+    // ==========================================
+    window.addEventListener('message', function(event) {
+      // รับเฉพาะ message ที่เป็น init
+      var data = event.data;
+      if (!data || data.type !== 'FACE_SCAN_INIT') return;
 
-    // ระบบป้องกัน: ถ้า URL พารามิเตอร์ครบถ้วนถึงจะแสดงหน้าต่างสแกน
-    if (mode && studentId && gasApi && returnUrl) {
-        document.body.style.display = 'flex';
-        initSystem();
-    }
+      openerOrigin = event.origin;
+      params = data.payload || {};
+      scanMode = params.mode || 'login';
+      adminTargetId = params.adminTargetId || '';
 
-    async function initSystem() {
-        if (mode === 'login') {
-            document.getElementById('instruction').innerText = "กำลังดึงข้อมูลใบหน้าจากฐานข้อมูล...";
-            try {
-                // เรียกใช้ GAS API แบบ text/plain
-                const res = await fetch(gasApi, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'getFace', id: studentId })
-                });
-                const result = await res.json();
-                if (!result.success) {
-                    Swal.fire('ข้อผิดพลาด', result.message, 'error').then(goBack);
-                    return;
-                }
-                savedDescriptor = new Float32Array(JSON.parse(result.descriptor));
-            } catch (err) {
-                Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error').then(goBack);
-                return;
-            }
+      if (params.descriptor) {
+        try {
+          savedDescriptor = new Float32Array(JSON.parse(params.descriptor));
+        } catch(e) { savedDescriptor = null; }
+      }
+
+      // แสดง label ชื่อผู้ใช้
+      if (params.name) {
+        document.getElementById('userLabel').textContent =
+          (scanMode === 'admin') ? 'บันทึกใบหน้า: เลขที่ ' + adminTargetId : 'สวัสดี ' + params.name;
+      }
+
+      // แสดงหน้าสแกน
+      document.getElementById('emptyPage').style.display = 'none';
+      document.getElementById('scanPage').style.display = 'flex';
+
+      initScan();
+    }, false);
+
+    // ==========================================
+    // ถ้าเข้าเปล่าๆ (ไม่มี opener) → แสดงหน้าว่าง
+    // ==========================================
+    window.addEventListener('load', function() {
+      // รอ 800ms — ถ้า opener ไม่ส่ง INIT มา = เข้าเปล่า
+      setTimeout(function() {
+        if (document.getElementById('scanPage').style.display !== 'flex') {
+          document.getElementById('emptyPage').style.display = 'flex';
         }
-        startCamera();
+      }, 800);
+    });
+
+    // ==========================================
+    // โหลดโมเดล AI
+    // ==========================================
+    async function loadFaceModels() {
+      if (faceModelsLoaded) return;
+      const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+      await Promise.all([
+        faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+        faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+        faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+        faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+      ]);
+      faceModelsLoaded = true;
     }
 
-    async function startCamera() {
-        document.getElementById('instruction').innerText = "กำลังโหลดโมเดล AI...";
-        const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
-        await Promise.all([
-            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-            faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-        ]);
+    // ==========================================
+    // เริ่มกล้องและ Liveness
+    // ==========================================
+    async function initScan() {
+      setInstruction('กำลังโหลดกล้องและโมเดล AI...');
+      await loadFaceModels();
 
-        const video = document.getElementById('faceVideo');
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } }).then(stream => {
-            video.srcObject = stream;
-        }).catch(err => {
-            Swal.fire('ข้อผิดพลาด', 'ไม่สามารถเข้าถึงกล้องได้', 'error').then(goBack);
-        });
+      faceVideo = document.getElementById('faceVideo');
+      try {
+        var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        faceVideo.srcObject = stream;
+      } catch (err) {
+        sendResult({ success: false, error: 'CAMERA_DENIED' });
+        return;
+      }
 
-        video.onplay = () => {
-            livenessActions = ['left', 'right', 'nod', 'blink', 'smile'].sort(() => Math.random() - 0.5);
-            promptNextLivenessAction();
+      faceVideo.onplay = () => {
+        // สุ่ม Liveness Actions
+        var allActions = ['left', 'right', 'nod', 'blink', 'smile'];
+        livenessActions = allActions.sort(() => Math.random() - 0.5);
+        currentActionIdx = 0; blinkCount = 0; eyeOpenStatus = true;
+        nodStartY = 0; isNoddingDown = false;
 
-            scanInterval = setInterval(async () => {
-                const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
-                    .withFaceLandmarks().withFaceExpressions().withFaceDescriptor();
-                
-                if (detections) checkLiveness(detections);
-                else document.getElementById('instruction').innerText = 'ไม่พบใบหน้า กรุณาอยู่ในเฟรม';
-            }, 150);
+        buildStepDots();
+        promptNextAction();
+
+        scanInterval = setInterval(async () => {
+          var det = await faceapi
+            .detectSingleFace(faceVideo, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks()
+            .withFaceExpressions()
+            .withFaceDescriptor();
+
+          if (det) {
+            checkLiveness(det);
+          } else {
+            setInstruction('ไม่พบใบหน้า กรุณาอยู่ในกรอบ');
+          }
+        }, 150);
+      };
+    }
+
+    // ==========================================
+    // Step dots
+    // ==========================================
+    function buildStepDots() {
+      var row = document.getElementById('stepsRow');
+      row.innerHTML = '';
+      livenessActions.forEach(function(_, i) {
+        var d = document.createElement('div');
+        d.className = 'step-dot' + (i === 0 ? ' active' : '');
+        d.id = 'dot-' + i;
+        row.appendChild(d);
+      });
+    }
+
+    function updateDot(idx, state) {
+      var el = document.getElementById('dot-' + idx);
+      if (!el) return;
+      el.className = 'step-dot ' + state;
+    }
+
+    // ==========================================
+    // Liveness
+    // ==========================================
+    function promptNextAction() {
+      if (currentActionIdx >= livenessActions.length) {
+        completeLiveness();
+        return;
+      }
+      var msgMap = {
+        left: 'หันหน้าไปทางซ้าย ←',
+        right: 'หันหน้าไปทางขวา →',
+        nod: 'พยักหน้าช้าๆ',
+        blink: 'กระพริบตา 2-3 ครั้ง',
+        smile: 'ยิ้มให้เห็นฟัน 😊'
+      };
+      setInstruction(msgMap[livenessActions[currentActionIdx]]);
+      if (livenessActions[currentActionIdx] === 'blink') {
+        blinkCount = 0; eyeOpenStatus = true;
+      }
+    }
+
+    function checkLiveness(det) {
+      if (currentActionIdx >= livenessActions.length) return;
+      var action = livenessActions[currentActionIdx];
+      var lm = det.landmarks;
+      var nose = lm.getNose()[3];
+      var jaw = lm.getJawOutline();
+      var leftEdge = jaw[0], rightEdge = jaw[16];
+      var distLeft = Math.abs(nose.x - leftEdge.x);
+      var distRight = Math.abs(rightEdge.x - nose.x);
+      var passed = false;
+
+      if (action === 'left') {
+        if (distLeft < distRight * 0.5) passed = true;
+      } else if (action === 'right') {
+        if (distRight < distLeft * 0.5) passed = true;
+      } else if (action === 'smile') {
+        if (det.expressions.happy > 0.85) passed = true;
+      } else if (action === 'nod') {
+        if (nodStartY === 0) nodStartY = nose.y;
+        if (nose.y - nodStartY > 15) isNoddingDown = true;
+        if (isNoddingDown && nodStartY - nose.y > 10) passed = true;
+      } else if (action === 'blink') {
+        var getEAR = function(eye) {
+          var v1 = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
+          var v2 = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
+          var h = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
+          return (v1 + v2) / (2.0 * h);
         };
+        var ear = (getEAR(lm.getLeftEye()) + getEAR(lm.getRightEye())) / 2;
+        if (ear < 0.22 && eyeOpenStatus) { blinkCount++; eyeOpenStatus = false; }
+        else if (ear >= 0.25) { eyeOpenStatus = true; }
+        setInstruction('กระพริบตา (' + blinkCount + '/2)');
+        if (blinkCount >= 2) passed = true;
+      }
+
+      if (passed) {
+        updateDot(currentActionIdx, 'done');
+        currentActionIdx++;
+        if (currentActionIdx < livenessActions.length) {
+          updateDot(currentActionIdx, 'active');
+        }
+        setInstruction('✓ ผ่านแล้ว!', '#10b981');
+        setTimeout(function() { promptNextAction(); }, 500);
+      }
     }
 
-    function promptNextLivenessAction() {
-        if(currentActionIdx >= livenessActions.length) {
-            completeLiveness();
-            return;
-        }
-        const msgs = { 'left': 'หันหน้าไปทางซ้าย', 'right': 'หันหน้าไปทางขวา', 'nod': 'พยักหน้าช้าๆ', 'blink': 'กระพริบตา 2-3 ครั้ง', 'smile': 'ยิ้มให้เห็นฟัน' };
-        document.getElementById('instruction').innerText = msgs[livenessActions[currentActionIdx]];
-        document.getElementById('instruction').style.color = '#fff';
-    }
-
-    function checkLiveness(detections) {
-        if(currentActionIdx >= livenessActions.length) return;
-        const action = livenessActions[currentActionIdx];
-        const landmarks = detections.landmarks;
-        const nose = landmarks.getNose()[3];
-        const leftEdge = landmarks.getJawOutline()[0];
-        const rightEdge = landmarks.getJawOutline()[16];
-        
-        let passed = false;
-        const distLeft = Math.abs(nose.x - leftEdge.x);
-        const distRight = Math.abs(rightEdge.x - nose.x);
-
-        if (action === 'left' && distLeft < distRight * 0.5) passed = true;
-        else if (action === 'right' && distRight < distLeft * 0.5) passed = true;
-        else if (action === 'smile' && detections.expressions.happy > 0.85) passed = true;
-        else if (action === 'nod') {
-            if(nodStartY === 0) nodStartY = nose.y;
-            if(nose.y - nodStartY > 15) isNoddingDown = true;
-            if(isNoddingDown && nodStartY - nose.y > 10) passed = true;
-        } else if (action === 'blink') {
-            const getEAR = (eye) => {
-                const v1 = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
-                const v2 = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
-                const h = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
-                return (v1 + v2) / (2.0 * h);
-            };
-            const ear = (getEAR(landmarks.getLeftEye()) + getEAR(landmarks.getRightEye())) / 2;
-            if (ear < 0.22 && eyeOpenStatus) { blinkCount++; eyeOpenStatus = false; } 
-            else if (ear >= 0.25) { eyeOpenStatus = true; }
-            document.getElementById('instruction').innerText = 'กระพริบตา (' + blinkCount + '/2)';
-            if (blinkCount >= 2) passed = true;
-        }
-
-        if (passed) {
-            currentActionIdx++;
-            document.getElementById('instruction').style.color = '#00ff00';
-            setTimeout(promptNextLivenessAction, 400);
-        }
-    }
-
+    // ==========================================
+    // Liveness สำเร็จ → Color Flash → ส่งผล
+    // ==========================================
     async function completeLiveness() {
-        clearInterval(scanInterval);
-        document.getElementById('instruction').innerText = 'ทดสอบแสงสะท้อน...';
-        
-        const colors = ['rgba(255,0,0,0.6)', 'rgba(0,0,255,0.6)', 'rgba(255,255,0,0.6)', 'rgba(0,255,0,0.6)'];
-        const overlay = document.getElementById('colorFlashOverlay');
-        for(let c of colors) {
-            overlay.style.backgroundColor = c; overlay.style.opacity = '1';
-            await new Promise(r => setTimeout(r, 200));
+      clearInterval(scanInterval);
+      setInstruction('ทดสอบแสงสะท้อน...');
+
+      var colors = [
+        'rgba(255,0,0,0.6)', 'rgba(0,0,255,0.6)',
+        'rgba(255,255,0,0.6)', 'rgba(0,255,0,0.6)', 'rgba(128,0,128,0.6)'
+      ];
+      var overlay = document.getElementById('colorFlashOverlay');
+      for (var c of colors) {
+        overlay.style.backgroundColor = c;
+        overlay.style.opacity = '1';
+        await new Promise(r => setTimeout(r, 200));
+      }
+      overlay.style.opacity = '0';
+      setInstruction('กำลังประมวลผลใบหน้า...');
+
+      var det = await faceapi
+        .detectSingleFace(faceVideo, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!det) {
+        setInstruction('หลุดเฟรม กรุณาลองใหม่', '#ef4444');
+        setTimeout(function() { restartScan(); }, 1500);
+        return;
+      }
+
+      stopCamera();
+
+      if (scanMode === 'admin') {
+        // ส่ง descriptor กลับ ให้ Apps Script บันทึก
+        showResult('✅', 'บันทึกใบหน้าสำเร็จ', 'ปิดหน้าต่างนี้ได้เลย');
+        sendResult({
+          success: true,
+          mode: 'admin',
+          adminTargetId: adminTargetId,
+          descriptor: JSON.stringify(Array.from(det.descriptor))
+        });
+      } else {
+        // login mode: เปรียบเทียบกับ descriptor ที่บันทึกไว้
+        if (!savedDescriptor) {
+          showResult('❌', 'ยังไม่ได้ลงทะเบียนใบหน้า', 'กรุณาใช้ OTP แทน');
+          sendResult({ success: false, error: 'NO_DESCRIPTOR' });
+          return;
         }
-        overlay.style.opacity = '0';
-        document.getElementById('instruction').innerText = 'กำลังประมวลผล...';
-        
-        const video = document.getElementById('faceVideo');
-        const detections = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();
-        
-        if(detections) processFaceResult(detections.descriptor);
-        else Swal.fire('ข้อผิดพลาด', 'หลุดเฟรมขณะประมวลผล กรุณาลองใหม่', 'error').then(() => { startCamera(); });
-    }
-
-    async function processFaceResult(descriptor) {
-        if (mode === 'admin') {
-            document.getElementById('instruction').innerText = 'กำลังบันทึกลงฐานข้อมูล...';
-            try {
-                const res = await fetch(gasApi, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'saveFace', id: studentId, descriptor: JSON.stringify(Array.from(descriptor)) })
-                });
-                const result = await res.json();
-                if(result.success) returnSuccessBack();
-                else Swal.fire('ผิดพลาด', result.message, 'error').then(goBack);
-            } catch (err) {
-                Swal.fire('ผิดพลาด', 'ส่งข้อมูลไม่ได้', 'error').then(goBack);
-            }
-        } else if (mode === 'login') {
-            const distance = faceapi.euclideanDistance(descriptor, savedDescriptor);
-            if (distance < 0.5) {
-                returnSuccessBack();
-            } else {
-                Swal.fire('ผิดพลาด', 'ใบหน้าไม่ตรงกับที่ลงทะเบียนไว้', 'error').then(goBack);
-            }
+        var distance = faceapi.euclideanDistance(det.descriptor, savedDescriptor);
+        if (distance < 0.5) {
+          showResult('✅', 'ยืนยันตัวตนสำเร็จ', 'กำลังเข้าสู่ระบบ...');
+          sendResult({ success: true, mode: 'login', distance: distance });
+        } else {
+          showResult('❌', 'ใบหน้าไม่ตรงกัน', 'กรุณาลองใหม่');
+          sendResult({ success: false, error: 'FACE_MISMATCH', distance: distance });
         }
+      }
     }
 
-    function returnSuccessBack() {
-        const target = returnUrl + `?action=face_success&mode=${mode}&id=${encodeURIComponent(studentId)}&name=${encodeURIComponent(studentName)}&email=${encodeURIComponent(studentEmail)}`;
-        window.location.href = target;
+    // ==========================================
+    // Utils
+    // ==========================================
+    function setInstruction(text, color) {
+      var el = document.getElementById('faceScanInstruction');
+      el.textContent = text;
+      el.style.color = color || '#fff';
     }
 
-    function goBack() {
-        if(returnUrl) window.location.href = returnUrl;
+    function stopCamera() {
+      clearInterval(scanInterval);
+      if (faceVideo && faceVideo.srcObject) {
+        faceVideo.srcObject.getTracks().forEach(t => t.stop());
+      }
+    }
+
+    function restartScan() {
+      stopCamera();
+      initScan();
+    }
+
+    function cancelScan() {
+      stopCamera();
+      sendResult({ success: false, error: 'CANCELLED' });
+      window.close();
+    }
+
+    function showResult(icon, text, sub) {
+      document.getElementById('resultIcon').textContent = icon;
+      document.getElementById('resultText').textContent = text;
+      document.getElementById('resultSub').textContent = sub;
+      document.getElementById('resultOverlay').classList.add('show');
+      // ปิดหน้าต่างอัตโนมัติหลัง 2.5 วิ
+      setTimeout(function() { window.close(); }, 2500);
+    }
+
+    // ส่ง message กลับหน้าหลัก (Apps Script)
+    function sendResult(payload) {
+      if (window.opener) {
+        try {
+          window.opener.postMessage({ type: 'FACE_SCAN_RESULT', payload: payload }, openerOrigin || '*');
+        } catch(e) {
+          window.opener.postMessage({ type: 'FACE_SCAN_RESULT', payload: payload }, '*');
+        }
+      }
     }
   </script>
 </body>
