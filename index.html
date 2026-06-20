@@ -225,7 +225,7 @@
     var faceModelsLoaded = false;
     var faceVideo, scanInterval;
     var livenessActions = [], currentActionIdx = 0;
-    var blinkCount = 0, eyeOpenStatus = true, nodStartY = 0, isNoddingDown = false;
+    var nodStartY = 0, isNoddingDown = false;
 
     window.addEventListener('load', function() {
       var hash = window.location.hash.slice(1); // ตัด '#' ออก
@@ -304,9 +304,9 @@
       }
 
       faceVideo.onplay = function() {
-        var allActions = ['left', 'right', 'nod', 'blink', 'smile'];
+        var allActions = ['left', 'right', 'nod', 'smile'];
         livenessActions = allActions.sort(() => Math.random() - 0.5);
-        currentActionIdx = 0; blinkCount = 0; eyeOpenStatus = true;
+        currentActionIdx = 0;
         nodStartY = 0; isNoddingDown = false;
 
         buildStepDots();
@@ -348,47 +348,71 @@
     // ==========================================
     function promptNextAction() {
       if (currentActionIdx >= livenessActions.length) { completeLiveness(); return; }
+
+      var action = livenessActions[currentActionIdx];
+
+      // Reset state เมื่อเริ่ม action ใหม่
+      if (action === 'nod') {
+        nodStartY = 0;
+        isNoddingDown = false;
+      }
+
       var msgMap = {
-        left: 'หันหน้าไปทางซ้าย ←',
+        left:  'หันหน้าไปทางซ้าย ←',
         right: 'หันหน้าไปทางขวา →',
-        nod: 'พยักหน้าช้าๆ',
-        blink: 'กระพริบตา 2-3 ครั้ง',
+        nod:   'พยักหน้าลงแล้วกลับขึ้น',
         smile: 'ยิ้มให้เห็นฟัน 😊'
       };
-      setInstruction(msgMap[livenessActions[currentActionIdx]]);
-      if (livenessActions[currentActionIdx] === 'blink') { blinkCount = 0; eyeOpenStatus = true; }
+      setInstruction(msgMap[action]);
     }
 
     function checkLiveness(det) {
       if (currentActionIdx >= livenessActions.length) return;
       var action = livenessActions[currentActionIdx];
-      var lm = det.landmarks;
-      var nose = lm.getNose()[3];
+      var lm  = det.landmarks;
+
+      // ใช้ nose tip (getNose()[6]) และ jaw เพื่อคำนวณ
+      var nose = lm.getNose()[6];   // tip of nose
       var jaw  = lm.getJawOutline();
-      var distLeft  = Math.abs(nose.x - jaw[0].x);
-      var distRight = Math.abs(jaw[16].x - nose.x);
+
+      // ระยะห่างจากจมูกถึงขอบขากรรไกรซ้าย/ขวา (ใน image space ที่ไม่ mirror)
+      var distLeft  = Math.abs(nose.x - jaw[0].x);   // ซ้ายของ image = ขวาของผู้ใช้จริง
+      var distRight = Math.abs(jaw[16].x - nose.x);  // ขวาของ image = ซ้ายของผู้ใช้จริง
+
+      // face width สำหรับ adaptive threshold
+      var faceW = jaw[16].x - jaw[0].x;
+
       var passed = false;
 
-      if (action === 'left')  { if (distLeft  < distRight * 0.5) passed = true; }
-      else if (action === 'right') { if (distRight < distLeft  * 0.5) passed = true; }
-      else if (action === 'smile') { if (det.expressions.happy > 0.85) passed = true; }
-      else if (action === 'nod') {
+      if (action === 'left') {
+        // วิดีโอ mirror → ผู้ใช้เห็นตัวเองหันซ้าย = จมูกเคลื่อนขวาใน image space
+        // → distRight ลด (jaw[16] ใกล้จมูก)
+        if (faceW > 0 && distRight / faceW < 0.35) passed = true;
+
+      } else if (action === 'right') {
+        // ผู้ใช้เห็นตัวเองหันขวา = จมูกเคลื่อนซ้ายใน image space
+        // → distLeft ลด (jaw[0] ใกล้จมูก)
+        if (faceW > 0 && distLeft / faceW < 0.35) passed = true;
+
+      } else if (action === 'smile') {
+        if (det.expressions.happy > 0.75) passed = true;
+
+      } else if (action === 'nod') {
+        // ใช้ nose bridge (getNose()[0]) และ chin (jaw[8]) คำนวณ face height
+        var noseBridge = lm.getNose()[0];
+        var chin = jaw[8];
+        var faceH = Math.abs(chin.y - noseBridge.y);
+        var downTh = faceH * 0.10;  // พยักหน้าลง 10% ของความสูงหน้า
+        var upTh   = faceH * 0.05;  // กลับขึ้น 5%
+
         if (nodStartY === 0) nodStartY = nose.y;
-        if (nose.y - nodStartY > 15) isNoddingDown = true;
-        if (isNoddingDown && nodStartY - nose.y > 10) passed = true;
-      }
-      else if (action === 'blink') {
-        var getEAR = function(eye) {
-          var v1 = Math.hypot(eye[1].x - eye[5].x, eye[1].y - eye[5].y);
-          var v2 = Math.hypot(eye[2].x - eye[4].x, eye[2].y - eye[4].y);
-          var h  = Math.hypot(eye[0].x - eye[3].x, eye[0].y - eye[3].y);
-          return (v1 + v2) / (2.0 * h);
-        };
-        var ear = (getEAR(lm.getLeftEye()) + getEAR(lm.getRightEye())) / 2;
-        if (ear < 0.22 && eyeOpenStatus)  { blinkCount++; eyeOpenStatus = false; }
-        else if (ear >= 0.25) { eyeOpenStatus = true; }
-        setInstruction('กระพริบตา (' + blinkCount + '/2)');
-        if (blinkCount >= 2) passed = true;
+
+        if (!isNoddingDown && (nose.y - nodStartY) > downTh) {
+          isNoddingDown = true;
+        }
+        if (isNoddingDown && (nose.y - nodStartY) < upTh) {
+          passed = true;
+        }
       }
 
       if (passed) {
