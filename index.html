@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
   <style>
+    /* CSS เดิมทั้งหมด (คงไว้เหมือนเดิม) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
@@ -29,6 +30,7 @@
       height: 100vh;
     }
     #emptyPage .lock-icon { font-size: 4rem; opacity: 0.1; }
+    #emptyPage .wait-text { margin-top: 10px; font-size: 1rem; color: #555; }
 
     #scanPage {
       display: none;
@@ -221,7 +223,10 @@
 </head>
 <body>
 
-  <div id="emptyPage"><div class="lock-icon">🔒</div></div>
+  <div id="emptyPage">
+    <div class="lock-icon">⏳</div>
+    <div class="wait-text">รอการเชื่อมต่อ...</div>
+  </div>
 
   <div id="scanPage">
     <div id="colorFlashOverlay"></div>
@@ -261,14 +266,41 @@
     var faceDetected = false;
 
     // ==========================================
+    // ตัวกลาง (Bridge/Intermediary) - รับค่าจาก Parent
+    // ==========================================
+    window.addEventListener('message', function (event) {
+      var data = event.data;
+      if (!data || !data.type) return;
+
+      // เมื่อได้รับคำสั่ง 'START_SCAN' จากหน้าต่างแม่
+      if (data.type === 'START_SCAN') {
+        setupScanner(data.payload || {});
+      } 
+      // เมื่อได้รับคำสั่งให้หยุด
+      else if (data.type === 'STOP_SCAN') {
+        cancelScan();
+      }
+    });
+
+    // ==========================================
     // Boot
     // ==========================================
     window.addEventListener('load', function () {
       var hash = window.location.hash.slice(1);
-      if (!hash) { show('emptyPage'); return; }
-      try { params = JSON.parse(decodeURIComponent(escape(atob(hash)))); }
-      catch (e) { show('emptyPage'); return; }
+      if (hash) {
+        try { 
+          var decodedParams = JSON.parse(decodeURIComponent(escape(atob(hash)))); 
+          setupScanner(decodedParams);
+        } catch (e) { show('emptyPage'); }
+      } else {
+        // หากไม่มี Hash ให้แสดงหน้าจอรอรับคำสั่งผ่าน postMessage (Message Event)
+        show('emptyPage'); 
+      }
+    });
 
+    // ฟังก์ชันสำหรับตั้งค่าพารามิเตอร์เริ่มต้น
+    function setupScanner(payloadParams) {
+      params = payloadParams;
       scanMode      = params.mode || 'login';
       adminTargetId = params.adminTargetId || '';
 
@@ -286,7 +318,7 @@
 
       show('scanPage');
       initScan();
-    });
+    }
 
     function show(id) {
       ['emptyPage', 'scanPage'].forEach(function (p) {
@@ -608,11 +640,34 @@
     function cancelScan() {
       stopCamera();
       sendResult({ success: false, error: 'CANCELLED' });
-      window.close();
+      // ปิดหน้าต่างถ้าเป็นการเปิดแบบ popup
+      if (window.opener) window.close();
     }
 
+    // ==========================================
+    // ตัวกลาง (Bridge/Intermediary) - ส่งค่ากลับ
+    // ==========================================
     function sendResult(payload) {
-      if (window.opener) window.opener.postMessage({ type: 'FACE_SCAN_RESULT', payload: payload }, '*');
+      var messageObj = { type: 'FACE_SCAN_RESULT', payload: payload };
+
+      // 1. ส่งผ่าน window.opener (กรณีเปิดแบบแท็บใหม่ หรือ Popup)
+      if (window.opener) {
+        window.opener.postMessage(messageObj, '*');
+      }
+
+      // 2. ส่งผ่าน window.parent (กรณีเปิดแบบฝัง iframe ในเว็บแม่)
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(messageObj, '*');
+      }
+
+      // 3. เป็นตัวกลางยิง Webhook (กรณีส่งพารามิเตอร์ webhookUrl มาด้วย)
+      if (params && params.webhookUrl) {
+        fetch(params.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.error('Webhook Send Error:', err));
+      }
     }
   </script>
 </body>
