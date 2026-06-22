@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>สแกนใบหน้า</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
@@ -54,12 +54,12 @@
 
     .scan-header {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
       z-index: 101;
     }
     .scan-subtitle {
-      font-size: 0.85rem;
-      color: #6b7280;
+      font-size: 0.95rem;
+      color: #9ca3af;
       margin-top: 4px;
     }
 
@@ -69,23 +69,25 @@
       text-align: center;
       color: #fff;
       text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       min-height: 2rem;
       z-index: 101;
       transition: color 0.3s ease;
+      padding: 0 20px;
     }
 
-    /* ── กล้อง: ไม่มีกรอบสี่เหลี่ยม ── */
+    /* ── กล้อง: รองรับ Mobile Responsive ── */
     .camera-container {
       position: relative;
       z-index: 101;
-      border-radius: 24px;
-      overflow: hidden;
-      /* ไม่มี border / box-shadow — วงรีบน canvas ทำหน้าที่แทน */
       width: 90%;
-      max-width: 380px;
-      height: 320px;
-      background: #111;
+      max-width: 400px;
+      height: 60vh; /* ยืดหยุ่นตามความสูงจอมือถือ */
+      max-height: 500px;
+      border-radius: 24px;
+      overflow: hidden; /* ทำให้วิดีโอโค้งมนตามกรอบ */
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      background: #1a1a1a;
     }
 
     #faceVideo {
@@ -96,11 +98,12 @@
       transform: scaleX(-1);
     }
 
-    /* Canvas overlay — mirror ตามวิดีโอ */
+    /* Canvas overlay — mirror ตามวิดีโอและซ้อนทับแบบโปร่งใส */
     #faceCanvas {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
+      object-fit: cover;
       transform: scaleX(-1);
       pointer-events: none;
       z-index: 2;
@@ -109,37 +112,37 @@
     /* Steps */
     .steps-row {
       display: flex;
-      gap: 8px;
-      margin-top: 20px;
+      gap: 10px;
+      margin-top: 24px;
       z-index: 101;
     }
     .step-dot {
-      width: 10px; height: 10px;
+      width: 12px; height: 12px;
       border-radius: 50%;
       background: rgba(255,255,255,0.2);
       transition: all 0.4s ease;
     }
     .step-dot.active {
       background: #3b82f6;
-      box-shadow: 0 0 8px rgba(59, 130, 246, 0.8);
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
       transform: scale(1.3);
     }
     .step-dot.done { background: #10b981; }
 
     #cancelBtn {
-      margin-top: 24px;
+      margin-top: 28px;
       z-index: 101;
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.15);
       color: #fff;
-      border-radius: 20px;
-      padding: 10px 32px;
+      border-radius: 25px;
+      padding: 12px 36px;
       font-family: 'Prompt', sans-serif;
-      font-size: 0.9rem;
+      font-size: 1rem;
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    #cancelBtn:hover {
+    #cancelBtn:hover, #cancelBtn:active {
       background: rgba(239, 68, 68, 0.25);
       border-color: #ef4444;
     }
@@ -161,13 +164,16 @@
 
     .success-card {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 24px;
+      gap: 20px;
       background: rgba(16, 185, 129, 0.07);
       border: 1px solid rgba(16, 185, 129, 0.25);
       border-radius: 28px;
-      padding: 28px 32px;
+      padding: 32px 24px;
       margin-bottom: 28px;
+      width: 90%;
+      max-width: 320px;
       animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     }
     @keyframes slideUp {
@@ -176,37 +182,36 @@
     }
 
     .user-photo-frame {
-      width: 100px; height: 100px;
+      width: 110px; height: 110px;
       border-radius: 50%;
       overflow: hidden;
-      border: 3px solid #10b981;
+      border: 4px solid #10b981;
       box-shadow: 0 0 24px rgba(16, 185, 129, 0.5);
-      flex-shrink: 0;
       background: #1a1a1a;
     }
-    .user-photo-frame img { width: 100%; height: 100%; object-fit: cover; }
+    .user-photo-frame img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
-    .success-info { text-align: left; }
+    .success-info { text-align: center; }
     .success-icon {
-      font-size: 2.5rem;
-      margin-bottom: 8px;
+      font-size: 3rem;
+      margin-bottom: 12px;
       animation: popIn 0.45s 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     }
     @keyframes popIn {
       from { transform: scale(0); opacity: 0; }
       to   { transform: scale(1); opacity: 1; }
     }
-    .success-title { font-size: 1.35rem; font-weight: 700; color: #10b981; line-height: 1.2; }
-    .success-sub   { font-size: 0.82rem; color: #6b7280; margin-top: 5px; }
+    .success-title { font-size: 1.4rem; font-weight: 700; color: #10b981; line-height: 1.2; }
+    .success-sub   { font-size: 0.9rem; color: #9ca3af; margin-top: 8px; }
 
     #nextBtn {
       background: linear-gradient(135deg, #10b981, #059669);
       border: none;
       color: #fff;
       border-radius: 50px;
-      padding: 14px 52px;
+      padding: 16px 64px;
       font-family: 'Prompt', sans-serif;
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 600;
       cursor: pointer;
       box-shadow: 0 6px 24px rgba(16, 185, 129, 0.4);
@@ -214,8 +219,7 @@
       animation: fadeUp 0.5s 0.35s both;
       letter-spacing: 0.5px;
     }
-    #nextBtn:hover  { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(16, 185, 129, 0.55); }
-    #nextBtn:active { transform: translateY(0); }
+    #nextBtn:hover, #nextBtn:active { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(16, 185, 129, 0.55); }
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(14px); }
       to   { opacity: 1; transform: translateY(0); }
@@ -223,17 +227,13 @@
 
     .error-icon  { font-size: 4.5rem; margin-bottom: 1rem; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
     .error-title { font-size: 1.4rem; font-weight: 700; color: #ef4444; }
-    .error-sub   { font-size: 0.9rem; color: #9ca3af; margin-top: 8px; }
+    .error-sub   { font-size: 0.95rem; color: #9ca3af; margin-top: 8px; }
 
+    /* Media Queries สำหรับหน้าจอมือถือขนาดเล็กมาก */
     @media (max-height: 600px) {
-      .camera-container { height: 260px; }
-      #faceScanInstruction { font-size: 1.1rem; }
-      .user-photo-frame { width: 80px; height: 80px; }
-    }
-    @media (max-width: 360px) {
-      .success-card { padding: 20px; gap: 16px; }
-      .user-photo-frame { width: 80px; height: 80px; }
-      .success-title { font-size: 1.1rem; }
+      .camera-container { height: 50vh; }
+      #faceScanInstruction { font-size: 1.15rem; margin-bottom: 12px; }
+      .user-photo-frame { width: 90px; height: 90px; }
     }
   </style>
 </head>
@@ -253,7 +253,6 @@
     <div id="faceScanInstruction">กำลังโหลดโมเดล AI...</div>
 
     <div class="camera-container" id="cameraContainer">
-      <!-- ไม่มี scan-line แล้ว — canvas ดูแลแทนทั้งหมด -->
       <video id="faceVideo" autoplay muted playsinline></video>
       <canvas id="faceCanvas"></canvas>
     </div>
@@ -281,13 +280,13 @@
     var justPassed       = false;
 
     // ── Smooth oval state ──
-    // cur = ค่าปัจจุบัน (smooth), tgt = ค่าเป้าหมาย
     var cur = { cx:0, cy:0, rx:120, ry:150, alpha:0 };
     var tgt = { cx:0, cy:0, rx:120, ry:150, alpha:0 };
-    var ovalColor   = '#3b82f6';   // สีวงรีปัจจุบัน
+    var ovalColor   = '#3b82f6';
     var ovalMode    = 'guide';     // 'guide' | 'track' | 'multi'
-    var guidePhase  = 0;           // สำหรับ animation pulse ของ guide oval
+    var guidePhase  = 0;
     var faceDetected = false;
+    var multiDets = [];
 
     // ==========================================
     // Boot
@@ -340,17 +339,24 @@
     }
 
     // ==========================================
-    // เริ่มกล้อง
+    // เริ่มกล้อง (ตั้งค่าสำหรับมือถือ)
     // ==========================================
     async function initScan() {
-      setInstruction('กำลังโหลดกล้องและโมเดล AI...');
+      setInstruction('กำลังเปิดกล้อง...');
       await loadFaceModels();
 
       faceVideo  = document.getElementById('faceVideo');
       faceCanvas = document.getElementById('faceCanvas');
 
       try {
-        var stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        // ใช้ constraints ที่เหมาะกับมือถือแนวตั้ง
+        var stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            facingMode: 'user',
+            width: { ideal: 720 },
+            height: { ideal: 1280 }
+          } 
+        });
         faceVideo.srcObject = stream;
       } catch (err) {
         sendResult({ success: false, error: 'CAMERA_DENIED' });
@@ -359,10 +365,9 @@
       }
 
       faceVideo.onplay = function () {
-        faceCanvas.width  = faceVideo.videoWidth  || 640;
-        faceCanvas.height = faceVideo.videoHeight || 480;
+        faceCanvas.width  = faceVideo.videoWidth;
+        faceCanvas.height = faceVideo.videoHeight;
 
-        // เซ็ต guide oval ตรงกลาง canvas
         resetGuideOval();
 
         var allActions   = ['left', 'right', 'nod', 'smile'];
@@ -372,8 +377,6 @@
 
         buildStepDots();
         promptNextAction();
-
-        // เริ่ม RAF loop วาด oval
         startOvalLoop();
 
         // Detection loop
@@ -392,7 +395,7 @@
           if (dets.length === 0) {
             faceDetected = false;
             ovalMode = 'guide';
-            tgt.alpha = 0;           // ซ่อน tracking oval, guide loop จะแสดงแทน
+            tgt.alpha = 0;
             return;
           }
 
@@ -400,7 +403,6 @@
             faceDetected = false;
             ovalMode  = 'multi';
             ovalColor = '#ef4444';
-            // ใช้ box ของหน้าแรกเป็น target (วาดทุกหน้าใน RAF)
             multiDets = dets;
             tgt.alpha = 1;
             if (!justPassed)
@@ -414,7 +416,7 @@
           ovalColor = '#3b82f6';
 
           var box = dets[0].detection.box;
-          var pad = 16;
+          var pad = faceVideo.videoWidth * 0.05; // คำนวณ padding แบบ responsive
           tgt.cx    = box.x + box.width  / 2;
           tgt.cy    = box.y + box.height / 2;
           tgt.rx    = box.width  / 2 + pad;
@@ -427,10 +429,8 @@
     }
 
     // ==========================================
-    // RAF Loop — วาด oval อย่างนุ่มนวล
+    // RAF Loop — วาดวงรีโปร่งใส (ไม่มี Mask ดำ)
     // ==========================================
-    var multiDets = [];
-
     function startOvalLoop() {
       if (rafId) cancelAnimationFrame(rafId);
 
@@ -439,34 +439,28 @@
         var ctx = faceCanvas.getContext('2d');
         ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
 
-        var lerpT = 0.14; // ความเร็ว smooth (ยิ่งมาก ยิ่งตาม tight)
+        var lerpT = 0.14; 
 
         if (ovalMode === 'guide') {
-          // วาด guide oval กะพริบตรงกลาง
           guidePhase = (ts / 1800) % (Math.PI * 2);
-          var pulse = 0.38 + Math.sin(guidePhase) * 0.18;
-          drawGuideOval(ctx, pulse);
-
+          drawGuideOval(ctx);
         } else if (ovalMode === 'track') {
-          // Lerp ตำแหน่ง
           cur.cx = lerp(cur.cx, tgt.cx, lerpT);
           cur.cy = lerp(cur.cy, tgt.cy, lerpT);
           cur.rx = lerp(cur.rx, tgt.rx, lerpT);
           cur.ry = lerp(cur.ry, tgt.ry, lerpT);
           cur.alpha = lerp(cur.alpha, tgt.alpha, 0.1);
           drawTrackOval(ctx, cur.cx, cur.cy, cur.rx, cur.ry, ovalColor, cur.alpha);
-
         } else if (ovalMode === 'multi') {
           multiDets.forEach(function (d) {
             var b = d.detection.box;
-            var pad = 14;
+            var pad = faceCanvas.width * 0.04;
             drawTrackOval(ctx,
               b.x + b.width/2, b.y + b.height/2,
               b.width/2 + pad, b.height/2 + pad * 1.3,
               '#ef4444', 1);
           });
         }
-
         rafId = requestAnimationFrame(frame);
       }
       rafId = requestAnimationFrame(frame);
@@ -474,61 +468,62 @@
 
     function lerp(a, b, t) { return a + (b - a) * t; }
 
-    // ตั้งค่าเริ่มต้น guide oval ตรงกลาง canvas
     function resetGuideOval() {
       var w = faceCanvas.width, h = faceCanvas.height;
       cur.cx = tgt.cx = w / 2;
       cur.cy = tgt.cy = h * 0.48;
-      cur.rx = tgt.rx = w * 0.26;
-      cur.ry = tgt.ry = h * 0.40;
+      cur.rx = tgt.rx = w * 0.30;
+      cur.ry = tgt.ry = h * 0.38;
       cur.alpha = tgt.alpha = 0;
       ovalMode = 'guide';
     }
 
-    // ─── Guide oval: วงรีประ + ข้อความนำทาง ───
-    function drawGuideOval(ctx, pulseAlpha) {
+    // ─── วงรีประไหลเบาๆ (ไม่มีพื้นหลังดำ) ───
+    function drawGuideOval(ctx) {
+      var pulse = 0.38 + Math.sin(guidePhase) * 0.12;  
+      var pScale = 1 + Math.sin(guidePhase * 0.7) * 0.018; 
       var cx = faceCanvas.width  / 2;
       var cy = faceCanvas.height * 0.48;
-      var rx = faceCanvas.width  * 0.26;
-      var ry = faceCanvas.height * 0.40;
+      var rx = faceCanvas.width  * 0.28 * pScale;
+      var ry = faceCanvas.height * 0.40 * pScale;
 
       ctx.save();
-      ctx.setLineDash([10, 8]);
-      ctx.lineDashOffset = -(Date.now() / 60) % 18;   // เส้นประไหล
-      ctx.strokeStyle = 'rgba(255,255,255,' + pulseAlpha + ')';
-      ctx.lineWidth   = 2;
-      ctx.shadowColor = 'rgba(255,255,255,0.3)';
-      ctx.shadowBlur  = 8;
+      ctx.setLineDash([12, 10]);
+      ctx.lineDashOffset = -(Date.now() / 40);
+      ctx.strokeStyle = 'rgba(255,255,255,' + (pulse * 0.85) + ')';
+      ctx.lineWidth   = 3;
+      ctx.shadowColor = 'rgba(255,255,255,0.4)';
+      ctx.shadowBlur  = 12;
       ctx.beginPath();
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.restore();
     }
 
-    // ─── Tracking oval: solid + glow + จุด 4 ทิศ ───
+    // ─── Tracking oval: เส้นทึบวิ่งตามหน้า (ไม่มีพื้นหลังดำ) ───
     function drawTrackOval(ctx, cx, cy, rx, ry, color, alpha) {
+      if (alpha < 0.02) return;
       ctx.save();
-      ctx.globalAlpha = alpha;
 
-      // Glow layer (ซ้อน 2 ชั้น)
+      // Glow ชั้นนอก
       ctx.strokeStyle = color;
       ctx.lineWidth   = 6;
       ctx.shadowColor = color;
       ctx.shadowBlur  = 28;
-      ctx.globalAlpha = alpha * 0.35;
+      ctx.globalAlpha = alpha * 0.32;
       ctx.beginPath();
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       ctx.stroke();
 
       // เส้นหลัก
       ctx.shadowBlur  = 10;
-      ctx.lineWidth   = 2.5;
+      ctx.lineWidth   = 3;
       ctx.globalAlpha = alpha;
       ctx.beginPath();
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       ctx.stroke();
 
-      // จุด cardinal 4 ทิศ
+      // จุด 4 ทิศ
       ctx.fillStyle   = color;
       ctx.shadowColor = color;
       ctx.shadowBlur  = 8;
@@ -537,12 +532,11 @@
         ctx.arc(pt[0], pt[1], 5, 0, Math.PI * 2);
         ctx.fill();
       });
-
       ctx.restore();
     }
 
     // ==========================================
-    // Step dots
+    // Step dots & Liveness
     // ==========================================
     function buildStepDots() {
       var row = document.getElementById('stepsRow');
@@ -559,9 +553,6 @@
       if (el) el.className = 'step-dot ' + state;
     }
 
-    // ==========================================
-    // Liveness
-    // ==========================================
     function promptNextAction() {
       if (currentActionIdx >= livenessActions.length) { completeLiveness(); return; }
       var action = livenessActions[currentActionIdx];
@@ -599,7 +590,7 @@
 
       if (passed) {
         justPassed = true;
-        ovalColor  = '#10b981';   // เขียวทันทีเมื่อผ่าน
+        ovalColor  = '#10b981';
         setTimeout(function () {
           justPassed = false;
           ovalColor  = '#3b82f6';
@@ -618,17 +609,16 @@
     // ==========================================
     async function completeLiveness() {
       clearInterval(scanInterval);
-      setInstruction('ทดสอบแสงสะท้อน...');
+      setInstruction('กำลังประมวลผล...');
 
-      var colors  = ['rgba(255,0,0,0.6)','rgba(0,0,255,0.6)','rgba(255,255,0,0.6)','rgba(0,255,0,0.6)','rgba(128,0,128,0.6)'];
+      var colors  = ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.0)'];
       var overlay = document.getElementById('colorFlashOverlay');
       for (var c of colors) {
         overlay.style.backgroundColor = c;
         overlay.style.opacity = '1';
-        await new Promise(function (r) { setTimeout(r, 200); });
+        await new Promise(function (r) { setTimeout(r, 150); });
       }
       overlay.style.opacity = '0';
-      setInstruction('กำลังประมวลผลใบหน้า...');
 
       var det = await faceapi
         .detectSingleFace(faceVideo, new faceapi.TinyFaceDetectorOptions())
