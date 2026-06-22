@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,8 +8,11 @@
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
   <style>
-    /* CSS เดิมทั้งหมด (คงไว้เหมือนเดิม) */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
       font-family: 'Prompt', sans-serif;
@@ -29,8 +33,11 @@
       justify-content: center;
       height: 100vh;
     }
-    #emptyPage .lock-icon { font-size: 4rem; opacity: 0.1; }
-    #emptyPage .wait-text { margin-top: 10px; font-size: 1rem; color: #555; }
+
+    #emptyPage .lock-icon {
+      font-size: 4rem;
+      opacity: 0.1;
+    }
 
     #scanPage {
       display: none;
@@ -44,23 +51,34 @@
 
     #colorFlashOverlay {
       position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       opacity: 0;
       z-index: 100;
       pointer-events: none;
       transition: all 0.15s ease;
     }
 
-    .scan-header { text-align: center; margin-bottom: 12px; z-index: 101; }
-    .scan-subtitle { font-size: 0.95rem; color: #9ca3af; margin-top: 4px; }
+    .scan-header {
+      text-align: center;
+      margin-bottom: 12px;
+      z-index: 101;
+    }
+
+    .scan-subtitle {
+      font-size: 0.95rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
 
     #faceScanInstruction {
       font-size: 1.3rem;
       font-weight: 700;
       text-align: center;
       color: #fff;
-      text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+      text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.9);
       margin-bottom: 20px;
       min-height: 2rem;
       z-index: 101;
@@ -74,51 +92,66 @@
       z-index: 101;
       width: 90%;
       max-width: 400px;
-      height: 60vh; 
+      height: 60vh;
       max-height: 500px;
       border-radius: 24px;
-      overflow: hidden; 
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
       background: #1a1a1a;
     }
 
     #faceVideo {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
     }
 
     #faceCanvas {
       position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
       pointer-events: none;
       z-index: 2;
     }
 
-    .steps-row { display: flex; gap: 10px; margin-top: 24px; z-index: 101; }
+    .steps-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      z-index: 101;
+    }
+
     .step-dot {
-      width: 12px; height: 12px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       transition: all 0.4s ease;
     }
+
     .step-dot.active {
       background: #3b82f6;
       box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
       transform: scale(1.3);
     }
-    .step-dot.done { background: #10b981; }
+
+    .step-dot.done {
+      background: #10b981;
+    }
 
     #cancelBtn {
       margin-top: 28px;
       z-index: 101;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       color: #fff;
       border-radius: 25px;
       padding: 12px 36px;
@@ -127,7 +160,9 @@
       cursor: pointer;
       transition: all 0.2s ease;
     }
-    #cancelBtn:hover, #cancelBtn:active {
+
+    #cancelBtn:hover,
+    #cancelBtn:active {
       background: rgba(239, 68, 68, 0.25);
       border-color: #ef4444;
     }
@@ -137,7 +172,7 @@
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.92);
+      background: rgba(0, 0, 0, 0.92);
       z-index: 200;
       flex-direction: column;
       align-items: center;
@@ -145,7 +180,10 @@
       text-align: center;
       padding: 24px;
     }
-    #resultOverlay.show { display: flex; }
+
+    #resultOverlay.show {
+      display: flex;
+    }
 
     .success-card {
       display: flex;
@@ -161,33 +199,70 @@
       max-width: 320px;
       animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     }
+
     @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to   { transform: translateY(0);    opacity: 1; }
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .user-photo-frame {
-      width: 110px; height: 110px;
+      width: 110px;
+      height: 110px;
       border-radius: 50%;
       overflow: hidden;
       border: 4px solid #10b981;
       box-shadow: 0 0 24px rgba(16, 185, 129, 0.5);
       background: #1a1a1a;
     }
-    .user-photo-frame img { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
 
-    .success-info { text-align: center; }
+    .user-photo-frame img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1);
+    }
+
+    .success-info {
+      text-align: center;
+    }
+
     .success-icon {
       font-size: 3rem;
       margin-bottom: 12px;
       animation: popIn 0.45s 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
     }
+
     @keyframes popIn {
-      from { transform: scale(0); opacity: 0; }
-      to   { transform: scale(1); opacity: 1; }
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
-    .success-title { font-size: 1.4rem; font-weight: 700; color: #10b981; line-height: 1.2; }
-    .success-sub   { font-size: 0.9rem; color: #9ca3af; margin-top: 8px; }
+
+    .success-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #10b981;
+      line-height: 1.2;
+    }
+
+    .success-sub {
+      font-size: 0.9rem;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
 
     #nextBtn {
       background: linear-gradient(135deg, #10b981, #059669);
@@ -204,33 +279,72 @@
       animation: fadeUp 0.5s 0.35s both;
       letter-spacing: 0.5px;
     }
-    #nextBtn:hover, #nextBtn:active { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(16, 185, 129, 0.55); }
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(14px); }
-      to   { opacity: 1; transform: translateY(0); }
+
+    #nextBtn:hover,
+    #nextBtn:active {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 32px rgba(16, 185, 129, 0.55);
     }
 
-    .error-icon  { font-size: 4.5rem; margin-bottom: 1rem; animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    .error-title { font-size: 1.4rem; font-weight: 700; color: #ef4444; }
-    .error-sub   { font-size: 0.95rem; color: #9ca3af; margin-top: 8px; }
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .error-icon {
+      font-size: 4.5rem;
+      margin-bottom: 1rem;
+      animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .error-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ef4444;
+    }
+
+    .error-sub {
+      font-size: 0.95rem;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
 
     @media (max-height: 600px) {
-      .camera-container { height: 50vh; }
-      #faceScanInstruction { font-size: 1.15rem; margin-bottom: 12px; }
-      .user-photo-frame { width: 90px; height: 90px; }
+      .camera-container {
+        height: 50vh;
+      }
+
+      #faceScanInstruction {
+        font-size: 1.15rem;
+        margin-bottom: 12px;
+      }
+
+      .user-photo-frame {
+        width: 90px;
+        height: 90px;
+      }
     }
   </style>
 </head>
+
 <body>
 
   <div id="emptyPage">
-    <div class="lock-icon">⏳</div>
-    <div class="wait-text">รอการเชื่อมต่อ...</div>
+    <div class="lock-icon">🔒</div>
   </div>
 
   <div id="scanPage">
     <div id="colorFlashOverlay"></div>
-    <div class="scan-header"><div class="scan-subtitle" id="userLabel"></div></div>
+    <div class="scan-header">
+      <div class="scan-subtitle" id="userLabel"></div>
+    </div>
     <div id="faceScanInstruction">กำลังโหลดโมเดล AI...</div>
 
     <div class="camera-container" id="cameraContainer">
@@ -248,60 +362,33 @@
     // ==========================================
     // State
     // ==========================================
-    var params           = null;
-    var scanMode         = '';
-    var savedDesc        = null;
-    var adminTargetId    = '';
+    var params = null;
+    var scanMode = '';
+    var savedDesc = null;
+    var adminTargetId = '';
     var faceModelsLoaded = false;
     var faceVideo, faceCanvas, scanInterval, rafId;
-    var livenessActions  = [];
+    var livenessActions = [];
     var currentActionIdx = 0;
-    var nodStartY        = 0;
-    var isNoddingDown    = false;
-    var justPassed       = false;
+    var nodStartY = 0;
+    var isNoddingDown = false;
+    var justPassed = false;
 
     // ── Oval state ──
-    var ovalColor    = 'white';
-    var guidePhase   = 0;
+    var ovalColor = 'white';
+    var guidePhase = 0;
     var faceDetected = false;
-
-    // ==========================================
-    // ตัวกลาง (Bridge/Intermediary) - รับค่าจาก Parent
-    // ==========================================
-    window.addEventListener('message', function (event) {
-      var data = event.data;
-      if (!data || !data.type) return;
-
-      // เมื่อได้รับคำสั่ง 'START_SCAN' จากหน้าต่างแม่
-      if (data.type === 'START_SCAN') {
-        setupScanner(data.payload || {});
-      } 
-      // เมื่อได้รับคำสั่งให้หยุด
-      else if (data.type === 'STOP_SCAN') {
-        cancelScan();
-      }
-    });
 
     // ==========================================
     // Boot
     // ==========================================
     window.addEventListener('load', function () {
       var hash = window.location.hash.slice(1);
-      if (hash) {
-        try { 
-          var decodedParams = JSON.parse(decodeURIComponent(escape(atob(hash)))); 
-          setupScanner(decodedParams);
-        } catch (e) { show('emptyPage'); }
-      } else {
-        // หากไม่มี Hash ให้แสดงหน้าจอรอรับคำสั่งผ่าน postMessage (Message Event)
-        show('emptyPage'); 
-      }
-    });
+      if (!hash) { show('emptyPage'); return; }
+      try { params = JSON.parse(decodeURIComponent(escape(atob(hash)))); }
+      catch (e) { show('emptyPage'); return; }
 
-    // ฟังก์ชันสำหรับตั้งค่าพารามิเตอร์เริ่มต้น
-    function setupScanner(payloadParams) {
-      params = payloadParams;
-      scanMode      = params.mode || 'login';
+      scanMode = params.mode || 'login';
       adminTargetId = params.adminTargetId || '';
 
       if (params.descriptor) {
@@ -318,7 +405,7 @@
 
       show('scanPage');
       initScan();
-    }
+    });
 
     function show(id) {
       ['emptyPage', 'scanPage'].forEach(function (p) {
@@ -343,12 +430,12 @@
       setInstruction('กำลังเปิดกล้อง...');
       await loadFaceModels();
 
-      faceVideo  = document.getElementById('faceVideo');
+      faceVideo = document.getElementById('faceVideo');
       faceCanvas = document.getElementById('faceCanvas');
 
       try {
-        var stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } } 
+        var stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'user', width: { ideal: 720 }, height: { ideal: 1280 } }
         });
         faceVideo.srcObject = stream;
       } catch (err) {
@@ -358,11 +445,11 @@
       }
 
       faceVideo.onplay = function () {
-        faceCanvas.width  = faceVideo.videoWidth;
+        faceCanvas.width = faceVideo.videoWidth;
         faceCanvas.height = faceVideo.videoHeight;
 
-        var allActions   = ['left', 'right', 'nod', 'smile'];
-        livenessActions  = allActions.sort(function () { return Math.random() - 0.5; });
+        var allActions = ['left', 'right', 'nod', 'smile'];
+        livenessActions = allActions.sort(function () { return Math.random() - 0.5; });
         currentActionIdx = 0;
         nodStartY = 0; isNoddingDown = false; justPassed = false;
 
@@ -373,7 +460,7 @@
         // Detection loop
         scanInterval = setInterval(async function () {
           if (faceCanvas.width !== faceVideo.videoWidth && faceVideo.videoWidth > 0) {
-            faceCanvas.width  = faceVideo.videoWidth;
+            faceCanvas.width = faceVideo.videoWidth;
             faceCanvas.height = faceVideo.videoHeight;
           }
 
@@ -426,17 +513,17 @@
     }
 
     function drawFixedOval(ctx, color) {
-      var pulse = 0.38 + Math.sin(guidePhase) * 0.12;  
-      var pScale = 1 + Math.sin(guidePhase * 0.7) * 0.018; 
-      var cx = faceCanvas.width  / 2;
+      var pulse = 0.38 + Math.sin(guidePhase) * 0.12;
+      var pScale = 1 + Math.sin(guidePhase * 0.7) * 0.018;
+      var cx = faceCanvas.width / 2;
       var cy = faceCanvas.height * 0.48;
-      var rx = faceCanvas.width  * 0.28 * pScale;
+      var rx = faceCanvas.width * 0.28 * pScale;
       var ry = faceCanvas.height * 0.40 * pScale;
 
       ctx.save();
       ctx.setLineDash([12, 10]);
       ctx.lineDashOffset = -(Date.now() / 40);
-      
+
       if (color === 'white') {
         ctx.strokeStyle = 'rgba(255,255,255,' + (pulse * 0.85) + ')';
         ctx.shadowColor = 'rgba(255,255,255,0.4)';
@@ -444,9 +531,9 @@
         ctx.strokeStyle = color;
         ctx.shadowColor = color;
       }
-      
-      ctx.lineWidth   = 3;
-      ctx.shadowBlur  = 12;
+
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 12;
       ctx.beginPath();
       ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
       ctx.stroke();
@@ -466,7 +553,7 @@
         row.appendChild(d);
       });
     }
-    
+
     function updateDot(idx, state) {
       var el = document.getElementById('dot-' + idx);
       if (el) el.className = 'step-dot ' + state;
@@ -477,9 +564,9 @@
       var action = livenessActions[currentActionIdx];
       if (action === 'nod') { nodStartY = 0; isNoddingDown = false; }
       var msgMap = {
-        left:  'หันหน้าไปทางซ้าย ←',
+        left: 'หันหน้าไปทางซ้าย ←',
         right: 'หันหน้าไปทางขวา →',
-        nod:   'พยักหน้าลงแล้วกลับขึ้น',
+        nod: 'พยักหน้าลงแล้วกลับขึ้น',
         smile: 'ยิ้มให้เห็นฟัน 😊'
       };
       setInstruction(msgMap[action]);
@@ -488,31 +575,31 @@
     function checkLiveness(det) {
       if (currentActionIdx >= livenessActions.length) return;
       var action = livenessActions[currentActionIdx];
-      var lm     = det.landmarks;
-      var nose   = lm.getNose()[6];
-      var jaw    = lm.getJawOutline();
-      var distL  = Math.abs(nose.x - jaw[0].x);
-      var distR  = Math.abs(jaw[16].x - nose.x);
-      var faceW  = jaw[16].x - jaw[0].x;
+      var lm = det.landmarks;
+      var nose = lm.getNose()[6];
+      var jaw = lm.getJawOutline();
+      var distL = Math.abs(nose.x - jaw[0].x);
+      var distR = Math.abs(jaw[16].x - nose.x);
+      var faceW = jaw[16].x - jaw[0].x;
       var passed = false;
 
-      if      (action === 'left'  && faceW > 0 && distR / faceW < 0.35) passed = true;
+      if (action === 'left' && faceW > 0 && distR / faceW < 0.35) passed = true;
       else if (action === 'right' && faceW > 0 && distL / faceW < 0.35) passed = true;
-      else if (action === 'smile' && det.expressions.happy > 0.75)       passed = true;
+      else if (action === 'smile' && det.expressions.happy > 0.75) passed = true;
       else if (action === 'nod') {
-        var faceH  = Math.abs(jaw[8].y - lm.getNose()[0].y);
+        var faceH = Math.abs(jaw[8].y - lm.getNose()[0].y);
         var downTh = faceH * 0.10, upTh = faceH * 0.05;
         if (nodStartY === 0) nodStartY = nose.y;
         if (!isNoddingDown && (nose.y - nodStartY) > downTh) isNoddingDown = true;
-        if (isNoddingDown  && (nose.y - nodStartY) < upTh)   passed = true;
+        if (isNoddingDown && (nose.y - nodStartY) < upTh) passed = true;
       }
 
       if (passed) {
         justPassed = true;
-        ovalColor  = '#10b981'; // เปลี่ยนวงรีเป็นสีเขียว
+        ovalColor = '#10b981'; // เปลี่ยนวงรีเป็นสีเขียว
         setTimeout(function () {
           justPassed = false;
-          ovalColor  = '#3b82f6'; // กลับเป็นสีฟ้า
+          ovalColor = '#3b82f6'; // กลับเป็นสีฟ้า
         }, 650);
 
         updateDot(currentActionIdx, 'done');
@@ -530,7 +617,7 @@
       clearInterval(scanInterval);
       setInstruction('กำลังประมวลผล...');
 
-      var colors  = ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.0)'];
+      var colors = ['rgba(255,255,255,0.8)', 'rgba(255,255,255,0.0)'];
       var overlay = document.getElementById('colorFlashOverlay');
       for (var c of colors) {
         overlay.style.backgroundColor = c;
@@ -596,12 +683,12 @@
       var o = document.getElementById('resultOverlay');
       o.innerHTML =
         '<div class="success-card">' +
-          '<div class="user-photo-frame"><img src="' + photoUrl + '" alt="ภาพใบหน้า"></div>' +
-          '<div class="success-info">' +
-            '<div class="success-icon">✅</div>' +
-            '<div class="success-title">' + title + '</div>' +
-            '<div class="success-sub">'   + sub   + '</div>' +
-          '</div>' +
+        '<div class="user-photo-frame"><img src="' + photoUrl + '" alt="ภาพใบหน้า"></div>' +
+        '<div class="success-info">' +
+        '<div class="success-icon">✅</div>' +
+        '<div class="success-title">' + title + '</div>' +
+        '<div class="success-sub">' + sub + '</div>' +
+        '</div>' +
         '</div>' +
         '<button id="nextBtn" onclick="handleNext()">ต่อไป &nbsp;→</button>';
       o.classList.add('show');
@@ -640,35 +727,13 @@
     function cancelScan() {
       stopCamera();
       sendResult({ success: false, error: 'CANCELLED' });
-      // ปิดหน้าต่างถ้าเป็นการเปิดแบบ popup
-      if (window.opener) window.close();
+      window.close();
     }
 
-    // ==========================================
-    // ตัวกลาง (Bridge/Intermediary) - ส่งค่ากลับ
-    // ==========================================
     function sendResult(payload) {
-      var messageObj = { type: 'FACE_SCAN_RESULT', payload: payload };
-
-      // 1. ส่งผ่าน window.opener (กรณีเปิดแบบแท็บใหม่ หรือ Popup)
-      if (window.opener) {
-        window.opener.postMessage(messageObj, '*');
-      }
-
-      // 2. ส่งผ่าน window.parent (กรณีเปิดแบบฝัง iframe ในเว็บแม่)
-      if (window.parent && window.parent !== window) {
-        window.parent.postMessage(messageObj, '*');
-      }
-
-      // 3. เป็นตัวกลางยิง Webhook (กรณีส่งพารามิเตอร์ webhookUrl มาด้วย)
-      if (params && params.webhookUrl) {
-        fetch(params.webhookUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        }).catch(err => console.error('Webhook Send Error:', err));
-      }
+      if (window.opener) window.opener.postMessage({ type: 'FACE_SCAN_RESULT', payload: payload }, '*');
     }
   </script>
 </body>
+
 </html>
